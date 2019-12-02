@@ -1,24 +1,24 @@
-const fs = require('fs');
+const util = require('./Util.js');
 
-var rawDay1Input = fs.readFileSync('./Day1Input.txt');
-
-var day1Input = rawDay1Input.toString().split('\r\n');
-
-var totalFuel = 0;
-var totalWithFuel = 0;
-for (i = 0; i < day1Input.length; i++) {
-  let moduleFuel = Math.floor(parseInt(day1Input[i], 10) / 3) - 2;
+function CalculateFuel(aTotal, aElem) 
+{
+  let moduleFuel = Math.floor(parseInt(aElem, 10) / 3) - 2;
 
   if (moduleFuel > 0)
-    totalFuel += moduleFuel;
+    aTotal.fuel += moduleFuel;
 
   while (moduleFuel > 0)
   {
     moduleFuel = Math.floor(moduleFuel / 3) - 2;
     if (moduleFuel > 0)
-      totalWithFuel += moduleFuel;
+      aTotal.withFuel += moduleFuel;
   }
+
+  return aTotal;
 }
 
-console.log("Total fuel: " + totalFuel);
-console.log("Total with fuel: " + (totalFuel + totalWithFuel));
+var total = { "fuel": 0, "withFuel": 0 };
+util.ReduceInput('./Day1Input.txt', CalculateFuel, total, '\r\n');
+
+console.log("Total fuel: " + total.fuel);
+console.log("Total with fuel: " + (total.fuel + total.withFuel));

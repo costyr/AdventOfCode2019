@@ -1,16 +1,10 @@
-const fs = require('fs');
+const util = require('./Util.js');
 
-var rawDay1Input = fs.readFileSync('./Day2Input.txt');
-
-var day1Input = rawDay1Input.toString().split(',');
-
-var inst = [];
-for (i = 0; i < day1Input.length; i++)
-  inst.push(parseInt(day1Input[i]));
+var inst = util.ParseInput('./Day2Input.txt', util.ParseInt, ',');
 
 function RunProgram(aInst, aNoum, aVerb) 
 {
-  let inst = JSON.parse(JSON.stringify(aInst));
+  let inst = util.CopyObject(aInst);
 
   inst[1] = aNoum;
   inst[2] = aVerb;

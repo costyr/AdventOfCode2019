@@ -21,11 +21,17 @@ function StoreResult(aInst, aMode, aPos, aValue)
 
 function SplitInstruction(aValue) 
 {
-  let opCodeAndModes = aValue.toString();
-  for (let j = opCodeAndModes.length; j < 5; j++)
-    opCodeAndModes = "0" + opCodeAndModes;
+  let codes = [];
+  while (aValue > 0) 
+  {
+    codes.unshift(aValue % 10);
+    aValue = Math.floor(aValue / 10);
+  }
 
-  return opCodeAndModes.split("");
+  for (let j = codes.length; j < 5; j++)
+    codes.unshift(0);
+
+  return codes;
 }
 
 function RunProgram(aInst, aInput, aOutput) 
@@ -36,11 +42,11 @@ function RunProgram(aInst, aInput, aOutput)
   {
     let detail = SplitInstruction(inst[i]);
     
-    let param3Mode = parseInt(detail[0]);
-    let param2Mode = parseInt(detail[1]);
-    let param1Mode = parseInt(detail[2]);
+    let param3Mode = detail[0];
+    let param2Mode = detail[1];
+    let param1Mode = detail[2];
 
-    let opCode = parseInt(detail[3] + detail[4]);  
+    let opCode = detail[3] * 10 + detail[4];  
   
     if (opCode == 1)
     {
@@ -64,13 +70,15 @@ function RunProgram(aInst, aInput, aOutput)
     }
     else if (opCode == 3) 
     {
-      inst[inst[i + 1]] = aInput;
+      if (!StoreResult(inst, param1Mode, i + 1, aInput))
+        break;
 
       i += 2;
     }
     else if (opCode == 4) 
     {
-      aOutput.push(inst[inst[i + 1]]);
+      let param1 = GetParam(inst, param1Mode, i + 1);
+      aOutput.push(param1);
 
       i += 2;
     }

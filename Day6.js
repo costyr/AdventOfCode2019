@@ -22,7 +22,7 @@ function ParseNode(aMap, aMap2, aElem)
 
 var map = [];
 var map2 = [];
-util.MapInput('./Day6TestInput1.txt', ParseNode.bind(null, map, map2), '\r\n');
+util.MapInput('./Day6Input.txt', ParseNode.bind(null, map, map2), '\r\n');
 
 for (let node in map) 
 {
@@ -47,22 +47,30 @@ function ComputeAllOrbits(aMap)
       //console.log(node + "-->" + map[node]);
 
       let t = 0;
-      if (orbits[node] === undefined) 
+      if (orbits[node] !== undefined) 
       { 
-        repeat = true;
-        console.log(node);
-      }
-      else
+        //repeat = true;
+        //console.log(node);
         t = orbits[node];
+      }  
 
       for (let i = 0; i < map[node].length; i++)
       {
         let planet = map[node][i];
         let newOrbitCount = t + 1;
-        if (newOrbitCount > orbits[planet]) 
+
+        if (orbits[planet] === undefined)
         {
           orbits[planet] = newOrbitCount;
           repeat = true;
+        }
+        else 
+        {
+          if (newOrbitCount > orbits[planet]) 
+          {
+            orbits[planet] = newOrbitCount;
+            repeat = true;
+          }
         }
       }
     }

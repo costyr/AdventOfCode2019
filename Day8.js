@@ -18,14 +18,14 @@ function PrintImage(aImage, aWidth, aHeight)
   {
     let line = "";
     for (let x = 0; x < aWidth; x++)
-      line += aImage[y][x].toString();
+      line += aImage[y][x] == 0 ? " " : ".";
     console.log(line);
   }
 }
 
 function RenderLayer(aRawImage, aStart, aEnd, aImage, aWidth, aHeight) 
 {
-  console.log(aStart + " " + aEnd);
+  //console.log(aStart + " " + aEnd);
   let x = 0;
   let y = 0;
   for (let i = aStart; i < aEnd; i++, x++)
@@ -57,7 +57,7 @@ function RenderImage(aRawImage, aImage, aWidth, aHeight)
   }
 }
 
-console.log(rawImage);
+//console.log(rawImage);
 
 const imageWidth = 25;
 const imageHeight = 6;

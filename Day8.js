@@ -18,7 +18,7 @@ function PrintImage(aImage, aWidth, aHeight)
   {
     let line = "";
     for (let x = 0; x < aWidth; x++)
-      line += aImage[y][x] == 0 ? " " : ".";
+      line += aImage[y][x] == 0 ? " " : "0";
     console.log(line);
   }
 }

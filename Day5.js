@@ -3,13 +3,15 @@ const intcodeComputer = require('./IntcodeComputer.js');
 
 var inst = util.MapInput('./Day5Input.txt', util.ParseInt, ',');
 
-var io1 = new intcodeComputer.IntcodeIO([1]);
-var prog1 = new intcodeComputer.IntcodeProgram(inst, io1);
+var input1 = new intcodeComputer.IntcodeIOStream([1]);
+var output1 = new intcodeComputer.IntcodeIOStream([]);
+var prog1 = new intcodeComputer.IntcodeProgram(inst, input1, output1);
 prog1.Run();
 
-var io2 = new intcodeComputer.IntcodeIO([5]);
-var prog2 = new intcodeComputer.IntcodeProgram(inst, io2);
-prog2.Run(inst, io2);
+var input2 = new intcodeComputer.IntcodeIOStream([5]);
+var output2 = new intcodeComputer.IntcodeIOStream([]);
+var prog2 = new intcodeComputer.IntcodeProgram(inst, input2, output2);
+prog2.Run();
 
-console.log(io1.GetOutput());
-console.log(io2.GetOutput());
+output1.Print()
+output2.Print();

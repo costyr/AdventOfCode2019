@@ -1,64 +1,41 @@
 const util = require('./Util.js');
 
-class IntcodeIO {
-  constructor(aInput) {
-    this.mInput = aInput;
-    this.mInputOffset = 0;
-    this.mOutput = [];
+class IntcodeIOStream {
+  constructor(aStream) {
+    this.mStream = aStream;
+    this.mStreamPos = 0;
   }
 
-  HasInput() {
-    return this.mInputOffset < this.mInput.length;
+  IsEndOfStream() {
+    return this.mStreamPos >= this.mStream.length;
   }
 
-  GetInput() {
-    if (!this.HasInput()) {
+  Read() {
+    if (this.IsEndOfStream()) {
       console.log("IntcodeIO input invalid index: " + this.mInputOffset + " " + this.mInput);
       return;
     }
 
-    let input = this.mInput[this.mInputOffset++];
+    let input = this.mStream[this.mStreamPos++];
     //console.log("input<--" + input);
     return input;
   }
 
-  AddInput(aInput) {
-    this.mInput.push(aInput);
+  Write(aValue) {
+    this.mStream.push(aValue);
   }
 
-  ResetInputOffset() {
-    this.mInputOffset = 0;
-  }
-
-  AddOutput(aOutput) {
-    this.mOutput.push(aOutput);
-  }
-
-  GetOutput() {
-    return this.mOutput;
+  Get() {
+    return this.mStream;
   }
 
   Clear() {
-    this.mOutput = [];
+    this.mStream = [];
   }
 
-  PrintOutput() {
-    console.log(this.mOutput);
+  Print() {
+    console.log(this.mStream);
   }
-}
-
-function GetParam(aInst, aMode, aPos) {
-  return (aMode == 0) ? aInst[aInst[aPos]] : aInst[aPos];
-}
-
-function StoreResult(aInst, aMode, aPos, aValue) {
-  if (aMode != 0) {
-    console.log("Invalid param mode!");
-    return false;
-  }
-
-  aInst[aInst[aPos]] = aValue;
-  return true;
 }
 
 function SplitInstruction(aValue) {
@@ -74,25 +51,93 @@ function SplitInstruction(aValue) {
   return codes;
 }
 
+const NO_ERROR = 0;
+const ERROR_INPUT_NEEDED = 1;
+const ERROR_PROGRAM_HALTED = 2;
+const ERROR_INVALID_INSTURCTION = 3;
+
 class IntcodeProgram {
 
-  constructor(aInst, aIO) {
+  constructor(aInst, aInputStream, aOutputStream) {
     this.mInst = util.CopyObject(aInst);
-    this.mIO = aIO;
+    this.mInputStream = aInputStream;
+    this.mOutputStream = aOutputStream;
     this.mInstPos = 0;
     this.mErrorCode = 0;
+    this.mRelativeBase = 0;
+  }
+
+  GetValueAtMemPos(aPos) 
+  {
+    return this.mInst[aPos];
   }
 
   GetErrorCode() {
     return this.mErrorCode;
   }
 
+  ClearError() 
+  {
+    this.mErrorCode = NO_ERROR;
+  }
+
+  CheckMemoryAddress(aMemAddress)
+  {
+    if (aMemAddress >= this.mInst.length)
+      this.IncreaseMemory(aMemAddress + 1 - this.mInst.length);
+  }
+
+  IncreaseMemory(aAmount) 
+  {
+    for (let i = 0; i < aAmount; i++)
+      this.mInst.push(0);
+  }
+
+  GetParam(aMode, aPos) {
+
+    let memAddress = 0;
+    if (aMode == 0)
+      memAddress = this.mInst[aPos];
+    else if (aMode == 1)
+      memAddress = aPos;
+    else if (aMode == 2)
+      memAddress = this.mRelativeBase + this.mInst[aPos];
+    else
+    {
+      console.log("Invalid parameter mode: " + aMode);
+      return 0;
+    }
+
+    this.CheckMemoryAddress(memAddress);
+
+    return this.mInst[memAddress];
+  }
+
+  StoreResult(aMode, aPos, aValue) {
+    if ((aMode != 0) && (aMode != 2)) {
+      console.log("Invalid param mode!");
+      return false;
+    }
+  
+    let relativeBase = 0;
+    if (aMode == 2)
+      relativeBase = this.mRelativeBase;
+    
+    let memAddress = relativeBase + this.mInst[aPos];
+
+    this.CheckMemoryAddress(memAddress);
+
+    this.mInst[memAddress] = aValue;
+    return true;
+  }
+
   Run() {
 
-    if (this.mErrorCode == 2)
-      return 0;
+    if ((this.mErrorCode == ERROR_INPUT_NEEDED) && !this.mInputStream.IsEndOfStream())
+      this.mErrorCode = NO_ERROR;
 
-    this.mErrorCode = 0;
+    if (this.mErrorCode != NO_ERROR)
+      return this.mErrorCode;
 
     for (let i = this.mInstPos; i < this.mInst.length;) {
       let detail = SplitInstruction(this.mInst[i]);
@@ -104,44 +149,44 @@ class IntcodeProgram {
       let opCode = detail[3] * 10 + detail[4];
 
       if (opCode == 1) {
-        let param1 = GetParam(this.mInst, param1Mode, i + 1);
-        let param2 = GetParam(this.mInst, param2Mode, i + 2);
+        let param1 = this.GetParam(param1Mode, i + 1);
+        let param2 = this.GetParam(param2Mode, i + 2);
 
-        if (!StoreResult(this.mInst, param3Mode, i + 3, param1 + param2))
+        if (!this.StoreResult(param3Mode, i + 3, param1 + param2))
           break;
 
         i += 4;
       }
       else if (opCode == 2) {
-        let param1 = GetParam(this.mInst, param1Mode, i + 1);
-        let param2 = GetParam(this.mInst, param2Mode, i + 2);
+        let param1 = this.GetParam(param1Mode, i + 1);
+        let param2 = this.GetParam(param2Mode, i + 2);
 
-        if (!StoreResult(this.mInst, param3Mode, i + 3, param1 * param2))
+        if (!this.StoreResult(param3Mode, i + 3, param1 * param2))
           break;
 
         i += 4;
       }
       else if (opCode == 3) {
-        if (!this.mIO.HasInput())
+        if (this.mInputStream.IsEndOfStream())
         {
           this.mInstPos = i;
-          this.mErrorCode = 1;
+          this.mErrorCode = ERROR_INPUT_NEEDED;
           return 1;
         }
-        if (!StoreResult(this.mInst, param1Mode, i + 1, this.mIO.GetInput()))
+        if (!this.StoreResult(param1Mode, i + 1, this.mInputStream.Read()))
           break;
 
         i += 2;
       }
       else if (opCode == 4) {
-        let param1 = GetParam(this.mInst, param1Mode, i + 1);
-        this.mIO.AddOutput(param1);
+        let param1 = this.GetParam(param1Mode, i + 1);
+        this.mOutputStream.Write(param1);
 
         i += 2;
       }
       else if (opCode == 5) {
-        let param1 = GetParam(this.mInst, param1Mode, i + 1);
-        let param2 = GetParam(this.mInst, param2Mode, i + 2);
+        let param1 = this.GetParam(param1Mode, i + 1);
+        let param2 = this.GetParam(param2Mode, i + 2);
         if (param1) {
           i = param2;
         }
@@ -149,8 +194,8 @@ class IntcodeProgram {
           i += 3;
       }
       else if (opCode == 6) {
-        let param1 = GetParam(this.mInst, param1Mode, i + 1);
-        let param2 = GetParam(this.mInst, param2Mode, i + 2);
+        let param1 = this.GetParam(param1Mode, i + 1);
+        let param2 = this.GetParam(param2Mode, i + 2);
         if (param1 == 0) {
           i = param2;
         }
@@ -158,39 +203,48 @@ class IntcodeProgram {
           i += 3;
       }
       else if (opCode == 7) {
-        let param1 = GetParam(this.mInst, param1Mode, i + 1);
-        let param2 = GetParam(this.mInst, param2Mode, i + 2);
+        let param1 = this.GetParam(param1Mode, i + 1);
+        let param2 = this.GetParam(param2Mode, i + 2);
 
-        if (!StoreResult(this.mInst, param3Mode, i + 3, (param1 < param2) ? 1 : 0))
+        if (!this.StoreResult(param3Mode, i + 3, (param1 < param2) ? 1 : 0))
           break;
 
         i += 4;
       }
       else if (opCode == 8) {
-        let param1 = GetParam(this.mInst, param1Mode, i + 1);
-        let param2 = GetParam(this.mInst, param2Mode, i + 2);
+        let param1 = this.GetParam(param1Mode, i + 1);
+        let param2 = this.GetParam(param2Mode, i + 2);
 
-        if (!StoreResult(this.mInst, param3Mode, i + 3, (param1 == param2) ? 1 : 0))
+        if (!this.StoreResult(param3Mode, i + 3, (param1 == param2) ? 1 : 0))
           break;
 
         i += 4;
       }
+      else if (opCode == 9)
+      {
+        let param1 = this.GetParam(param1Mode, i + 1);
+        this.mRelativeBase += param1;
+
+        i += 2;
+      }
       else if (opCode == 99) 
       {
-        this.mErrorCode = 2;
+        this.mErrorCode = ERROR_PROGRAM_HALTED;
         break;
       }
       else {
         console.log("Invalid instruction!");
-        break
+        this.mErrorCode = ERROR_INVALID_INSTURCTION;
+        break;
       }
     }
 
-    return this.mInst[0];
+    return this.mErrorCode;
   }
 }
 
 module.exports = {
+  ERROR_PROGRAM_HALTED,
   IntcodeProgram,
-  IntcodeIO
+  IntcodeIOStream
 }

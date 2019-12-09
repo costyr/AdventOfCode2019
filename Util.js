@@ -54,6 +54,13 @@ function MapInput(aFilePath, aElemFunc, aSep)
   return inputArray.map(aElemFunc);
 }
 
+function ComputeMax(aMax, aValue) 
+{
+  if (aValue > aMax)
+    return aValue;
+  return aMax;
+}
+
 module.exports = {
   ComputeMapFilePath,
   CopyObject,
@@ -61,5 +68,6 @@ module.exports = {
   ParseInt,
   SplitInput,
   ReduceInput,
-  MapInput
+  MapInput,
+  ComputeMax
 }

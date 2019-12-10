@@ -6,13 +6,11 @@ function ParseLine(aLine) {
 
 var map = util.MapInput('./Day10Input.txt', ParseLine, '\r\n');
 
-console.log(map);
-
 function FindAsteroids(aMap, aAsteroids) {
   for (let y = 0; y < aMap.length; y++)
     for (let x = 0; x < aMap[y].length; x++)
       if (aMap[y][x] == '#')
-        aAsteroids.push({ "x": x, "y": y, "count": 0 });
+        aAsteroids.push({ "x": x, "y": y, "reachable": [] });
 }
 
 var asteroids = [];
@@ -101,9 +99,8 @@ function FindAsteroidsBetween(aAsteroid1Coord, aAsteroid2Coord, aAsteroids) {
   return false;
 }
 
-function CountReachable(aAsteroidCoord, aAsteroids, aLog) {
-
-  let reachable = [];
+function CountReachable(aAsteroidCoord, aAsteroids) 
+{
   for (let i = 0; i < aAsteroids.length; i++) {
     let asteroidCoord = asteroids[i];
 
@@ -114,130 +111,28 @@ function CountReachable(aAsteroidCoord, aAsteroids, aLog) {
 
     let found = FindAsteroidsBetween(aAsteroidCoord, asteroidCoord, aAsteroids);
 
-    if (aLog)
-      console.log(JSON.stringify(aAsteroidCoord) + " " + JSON.stringify(asteroidCoord) + "--> y=" + f.m + "*x + " + f.b + " " + found);
-
     if (!found) 
-    {
-      aAsteroidCoord.count++;
-      reachable.push(asteroidCoord);
-    }
+      aAsteroidCoord.reachable.push( { x: asteroidCoord.x, y: asteroidCoord.y});
   }
-
-  return reachable;
 }
 
 function ComputeMax(aMax, aElem) {
-  if (aElem.count > aMax.count) {
-    aMax.count = aElem.count;
-    aMax.pt = aElem;
+  if (aElem.reachable.length > aMax.count) {
+    aMax.count = aElem.reachable.length;
+    aMax.asteroid = aElem;
   }
   return aMax;
 }
 
 function FindStationLocation(aAsteroids) {
   for (let i = 0; i < aAsteroids.length; i++)
-    CountReachable(aAsteroids[i], aAsteroids, true)
+    CountReachable(aAsteroids[i], aAsteroids)
 }
 
-function Find200th(aAsteroidCoord, aAsteroids) {
-  let count = 0;
-  while (1) {
-    for (let i = 0; i < aAsteroids.length; i++) {
-      let asteroid = aAsteroids[i];
-
-      if (asteroid.d)
-        continue;
-
-      if (IsSame(aAsteroidCoord, asteroid))
-        continue;
-
-      if (!FindAsteroidsBetween(aAsteroidCoord, asteroid, aAsteroids)) {
-        count++;
-        aAsteroidCoord.d = true;
-
-        if (count == 200)
-          return asteroid;
-      }
-    }
-  }
-}
-
-function ComputeSlope(aPt1, aPt2) 
+function Sort360FromPoint(aOrigin, aPt1, aPt2) 
 {
-  return (aPt2.y - aPt1.y) / (aPt2.x - aPt1.x);
-}
-
-function ComputeAngle(aCenter, aPt1, aPt2) 
-{
-  let m1 = ComputeSlope(aCenter, aPt1);
-  let m2 = ComputeSlope(aCenter, aPt2);
-
-  let inc = 190 - Math.abs(Math.atan(m2) - Math.atan(m1));
-
-  return inc;
-}
-
-function ComputeDistance(aPt1, aPt2) 
-{
-  let dist = Math.sqrt(Math.pow(aPt2.x - aPt1.x, 2) + Math.pow(aPt2.y - aPt1.y, 2));
-
-  return dist;
-}
-
-function Sort360FromPoint(aCenter, aPt1, aPt2) {
-  
-  let rr = aCenter;
-  rr.x += 1;
-
-  let mCenter = ComputeSlope(rr, aCenter);
-  let m1 = ComputeSlope(aPt1, aCenter);
-  let m2 = ComputeSlope(aPt2, aCenter);
-
-  if ((m1 === Infinity) || (m2 === Infinity))
-  {
-        
-  }
-
-  let inc1 = 360 - Math.abs(Math.atan(mCenter) - Math.atan(m1));
-  let inc2 = 360 - Math.abs(Math.atan(mCenter) - Math.atan(m2));
-
-  if (inc1 < inc2)
-    return - 1;
-  else if (inc1 > inc2)
-    return 1;
-  else 
-    return 0;
-
-  /*
-  if (aPt1.x - aCenter.x >= 0 && aPt2.x - aCenter.x < 0)
-    return -1;
-  if (aPt1.x - aCenter.x < 0 && aPt2.x - aCenter.x >= 0)
-    return 1;
-  if (aPt1.x - aCenter.x == 0 && aPt2.x - aCenter.x == 0) {
-    if (aPt1.y - aCenter.y >= 0 || aPt2.y - aCenter.y >= 0)
-      return aPt1.y > aPt2.y ? 1 : -1;
-    return aPt2.y > aPt1.y ? -1 : 1;
-  }
-
-  // compute the cross product of vectors (center -> a) x (center -> b)
-  let det = (aPt1.x - aCenter.x) * (aPt2.y - aCenter.y) - (aPt2.x - aCenter.x) * (aPt1.y - aCenter.y);
-  if (det < 0)
-    return -1;
-  if (det > 0)
-    return 1;
-
-  // points a and b are on the same line from the center
-  // check which point is closer to the center
-  let d1 = (aPt1.x - aCenter.x) * (aPt1.x - aCenter.x) + (aPt1.y - aCenter.y) * (aPt1.y - aCenter.y);
-  let d2 = (aPt2.x - aCenter.x) * (aPt2.x - aCenter.x) + (aPt2.y - aCenter.y) * (aPt2.y - aCenter.y);
-  return d1 > d2 ? -1 : 1;*/
-}
-
-function Sort360FromPoint2(aPt1, aPt2) 
-{
-  let d1 = Math.atan2(aPt1.x, aPt1.y);
-  let d2 = Math.atan2(aPt2.x, aPt2.y);
+  let d1 = Math.atan2(aPt1.x - aOrigin.x, aPt1.y - aOrigin.y);
+  let d2 = Math.atan2(aPt2.x - aOrigin.x, aPt2.y - aOrigin.y);
 
   if (d1 < d2)
     return 1;
@@ -247,37 +142,14 @@ function Sort360FromPoint2(aPt1, aPt2)
     return 0;
 }
 
-console.log(asteroids);
-
-//console.log(ComputeFormula({ x: 8, y: 6 }, { x: 2, y: 3 }));
-
-var testPoint = { x: 11, y: 13, count: 0 };
-
-//CountReachable(testPoint, asteroids);
-
-//console.log(testPoint.count);
-
 FindStationLocation(asteroids);
 
-console.log(asteroids);
+var station = asteroids.reduce(ComputeMax, { count: 0, asteroid: null });
 
-//var rr = util.CopyObject(asteroids);
+console.log(station.count);
 
-var max = asteroids.reduce(ComputeMax, { count: 0, pt: null });
+var origin = { x: station.asteroid.x, y: station.asteroid.y };
 
-console.log(max);
+station.asteroid.reachable.sort(Sort360FromPoint.bind(null, origin));
 
-//var origin = { x: max.x, y: max.y};
-var origin = { x: max.x, y: max.y };
-
-//console.log(ComputeAngle(origin, pt1, pt2));
-
-var r = CountReachable(origin, asteroids, false);
-
-r.sort(Sort360FromPoint2);
-
-console.log(r);
-
-console.log(r[199]);
-
-//console.log(Find200th(origin , rr));
+console.log(station.asteroid.reachable[199].x * 100 + station.asteroid.reachable[199].y);

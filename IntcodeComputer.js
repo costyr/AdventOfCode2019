@@ -4,16 +4,10 @@ class IntcodeIOStream {
   constructor(aStream) {
     this.mStream = aStream;
     this.mStreamPos = 0;
-    this.mWriteNotifier = null;
   }
 
   IsEndOfStream() {
     return this.mStreamPos >= this.mStream.length;
-  }
-
-  SetWriteNotifier(aWriteNotifier) 
-  {
-    this.mWriteNotifier = aWriteNotifier;
   }
 
   Read() {
@@ -29,9 +23,6 @@ class IntcodeIOStream {
 
   Write(aValue) {
     this.mStream.push(aValue);
-
-    if (this.mWriteNotifier)
-      this.mWriteNotifier(aValue);
   }
 
   Get() {

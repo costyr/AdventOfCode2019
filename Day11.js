@@ -1,4 +1,5 @@
 const util = require('./Util.js');
+const matrix = require('./Matrix.js');
 const intcodeComputer = require('./IntcodeComputer.js');
 
 var inst = util.MapInput('./Day11Input.txt', util.ParseInt, ',');
@@ -23,32 +24,16 @@ class PanelState
     this.mDirection = DIR_UP;
   }
 
-  AddPath(aValue) 
+  IsEndOfStream() 
   {
-    let found = false;
-    for (let i = 0; i < this.mPath.length; i++)
-    {
-      if ((aValue.x == this.mPath[i].x) && (aValue.y == this.mPath[i].y))
-      {
-        this.mPath[i].color = aValue.color;
-        found = true;
-        break;
-      }
-    }
-
-    if (!found)
-      this.mPath.push(aValue);
+    return false;
   }
 
-  GetPanelColor(aX, aY) 
-  {
-    for (let i = 0; i < this.mPath.length; i++)
-      if ((aX == this.mPath[i].x) && (aY == this.mPath[i].y))
-        return this.mPath[i].color;
-    return COLOR_BLACK;
+  Read() {
+    return this.GetPanelColor(this.mX, this.mY);
   }
 
-  WriteNotifier(aInput, aValue) 
+  Write(aValue) 
   {
     if (this.mOutputOffset >= 1) 
     {
@@ -113,14 +98,40 @@ class PanelState
 
       this.mOutputOffset = 0;
 
-      aInput.Write(this.GetPanelColor(this.mX, this.mY));
-
       return;
     }
 
     this.mColor = aValue;
 
-    this.mOutputOffset++;                
+    this.mOutputOffset++;
+  }
+
+  AddPath(aValue) 
+  {
+    let found = false;
+    for (let i = 0; i < this.mPath.length; i++)
+    {
+      if ((aValue.x == this.mPath[i].x) && (aValue.y == this.mPath[i].y))
+      {
+        this.mPath[i].color = aValue.color;
+        found = true;
+        break;
+      }
+    }
+
+    if (!found)
+      this.mPath.push(aValue);
+  }
+
+  GetPanelColor(aX, aY) 
+  {
+    if (this.mPath.length == 0)
+      return this.mColor;
+
+    for (let i = 0; i < this.mPath.length; i++)
+      if ((aX == this.mPath[i].x) && (aY == this.mPath[i].y))
+        return this.mPath[i].color;
+    return COLOR_BLACK;
   }
 
   PrintPanels()
@@ -155,54 +166,31 @@ class PanelState
     let width = Math.abs(minMax.min.x) + Math.abs(minMax.max.x) + 1;
     let height = Math.abs(minMax.min.y) + Math.abs(minMax.max.y) + 1;
 
-    let screen = [];
-    for (let i = 0; i < height; i++) 
-    {
-      screen[i] = [];
-      for (let j = 0; j < width; j++)
-        screen[i][j] = ".";
-    }
+    let screen = new matrix.Matrix(width, height, ".");
 
     for (let i = 0; i < this.mPath.length; i++) 
     {
       let x = this.mPath[i].x + Math.abs(minMax.min.x);
       let y = this.mPath[i].y + Math.abs(minMax.min.y);
 
-      if (this.mPath[i].color == COLOR_WHITE) 
-        screen[y][x] = "#";
+      if (this.mPath[i].color == COLOR_WHITE)
+        screen.SetValue(y, x, "#");
     }
 
-    for (let i = height - 1; i >= 0; i--) 
-    {
-      let line = ""; 
-      for (let j = 0; j < width; j++)
-        line += screen[i][j];
-
-      console.log(line);
-    }
+    screen.PrintReverse();
   }
 }
 
-var input1 = new intcodeComputer.IntcodeIOStream([0]);
-var output1 = new intcodeComputer.IntcodeIOStream([]);
-
 var panelState1 = new PanelState(0, 0, COLOR_BLACK);
 
-output1.SetWriteNotifier(panelState1.WriteNotifier.bind(panelState1, input1));
-
-var prog1 = new intcodeComputer.IntcodeProgram(inst, input1, output1);
+var prog1 = new intcodeComputer.IntcodeProgram(inst, panelState1, panelState1);
 prog1.Run();
 
 panelState1.PrintPanels();
 
-var input2 = new intcodeComputer.IntcodeIOStream([1]);
-var output2 = new intcodeComputer.IntcodeIOStream([]);
+var panelState2 = new PanelState(0, 0, COLOR_WHITE);
 
-var panelState2 = new PanelState(0, 0, COLOR_BLACK);
-
-output2.SetWriteNotifier(panelState2.WriteNotifier.bind(panelState2, input2));
-
-var prog2 = new intcodeComputer.IntcodeProgram(inst, input2, output2);
+var prog2 = new intcodeComputer.IntcodeProgram(inst, panelState2, panelState2);
 prog2.Run();
 
 panelState2.PrintMessage();

@@ -28,8 +28,8 @@ function ComputeTotalEnergy(aMoons)
   {
     let moon = aMoons[i];
 
-    pot = Math.abs(moon.pos.x) + Math.abs(moon.pos.y) + Math.abs(moon.pos.z);
-    kin = Math.abs(moon.vel.x) + Math.abs(moon.vel.y) + Math.abs(moon.vel.z);
+    let pot = Math.abs(moon.pos.x) + Math.abs(moon.pos.y) + Math.abs(moon.pos.z);
+    let kin = Math.abs(moon.vel.x) + Math.abs(moon.vel.y) + Math.abs(moon.vel.z);
 
     total += pot * kin;
   }
@@ -57,17 +57,14 @@ function IsSameVel(aMoonPos1, aMoonPos2, aScanX, aScanY, aScanZ)
 
 function MoonsInInitialPos(aInitialMoonsPos, aMoons, aScanX, aScanY, aScanZ) 
 {
-  let samePos = 0;
-  let sameVel = 0;
   for (let i = 0; i < aMoons.length; i++) 
   {
-    if (IsSamePos(aInitialMoonsPos[i], aMoons[i], aScanX, aScanY, aScanZ))
-      samePos++;
-    if (IsSameVel(aInitialMoonsPos[i], aMoons[i], aScanX, aScanY, aScanZ))
-      sameVel++;
+    if (!IsSamePos(aInitialMoonsPos[i], aMoons[i], aScanX, aScanY, aScanZ) ||
+        !IsSameVel(aInitialMoonsPos[i], aMoons[i], aScanX, aScanY, aScanZ))
+      return false;
   }
 
-  return (samePos == 4) && (sameVel == 4);
+  return true;
 }
 
 function SimulateMotion(aMoons, aStepsCount, aComputeEnergy) 

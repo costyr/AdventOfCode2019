@@ -72,6 +72,11 @@ class IntcodeProgram {
     return this.mInst[aPos];
   }
 
+  SetValueAtMemPos(aPos, aValue)
+  {
+    this.mInst[aPos] = aValue;
+  }
+
   GetErrorCode() {
     return this.mErrorCode;
   }

@@ -75,9 +75,64 @@ function PrintMap(aMap)
   }
 }
 
-function ComputeInputForMaxScore(aMap) 
-{
-    
+class ArcadeCabinet {
+  constructor() {
+    this.mX = 0;
+    this.mY = 0;
+    this.mPaddlePos = { x: 0, y: 0};
+    this.mPaddleDir = 0;
+    this.mOutputOffset = 0;
+    this.mScore = 0;
+  }
+
+  GetScore()
+  {
+    return this.mScore;
+  }
+
+  IsEndOfStream() {
+    return false;
+  }
+
+  Read() {
+    return this.mPaddleDir;
+  }
+
+  Write(aValue) {
+    if (this.mOutputOffset == 0) 
+    {
+      this.mX = aValue;
+      this.mOutputOffset++;
+    }
+    else if (this.mOutputOffset == 1) 
+    {
+      this.mY = aValue;
+      this.mOutputOffset++;
+    }
+    else if (this.mOutputOffset == 2) 
+    {
+      this.mOutputOffset = 0;
+
+      if ((this.mX == -1) && (this.mY == 0))
+        this.mScore = aValue;
+      else 
+      {
+        if (aValue == ID_PADDLE)
+        {
+          this.mPaddlePos = { x: this.mX, y: this.mY };
+        }
+        else if (aValue == ID_BALL)
+        {
+          if (this.mX > this.mPaddlePos.x)
+            this.mPaddleDir = DIR_RIGHT;
+          else if (this.mX < this.mPaddlePos.x)
+            this.mPaddleDir = DIR_LEFT;
+          else 
+            this.mPaddleDir = DIR_NONE;
+        }
+      }  
+    }
+  }
 }
 
 var inst = util.MapInput('./Day13Input.txt', util.ParseInt, ',');
@@ -88,12 +143,14 @@ var prog1 = new intcodeComputer.IntcodeProgram(inst, input1, output1);
 prog1.Run();
 
 console.log(ComputeBlockTiles(output1.Get()));
-PrintMap(ComputeMap(output1.Get()));
 
-/*var input2 = ComputeInputForMaxScore(output1.Get());
-var output2 = new intcodeComputer.IntcodeIOStream([]);
-var prog2 = new intcodeComputer.IntcodeProgram(inst, input2, output2);
+//PrintMap(ComputeMap(output1.Get()));
+
+var game = new ArcadeCabinet();
+var prog2 = new intcodeComputer.IntcodeProgram(inst, game, game);
 
 prog2.SetValueAtMemPos(0, 2);
 
-prog2.Run();*/
+prog2.Run();
+
+console.log(game.GetScore());

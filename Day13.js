@@ -137,9 +137,8 @@ class ArcadeCabinet {
 
 var inst = util.MapInput('./Day13Input.txt', util.ParseInt, ',');
 
-var input1 = new intcodeComputer.IntcodeIOStream([]);
 var output1 = new intcodeComputer.IntcodeIOStream([]);
-var prog1 = new intcodeComputer.IntcodeProgram(inst, input1, output1);
+var prog1 = new intcodeComputer.IntcodeProgram(inst, null, output1);
 prog1.Run();
 
 console.log(ComputeBlockTiles(output1.Get()));

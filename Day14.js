@@ -10,7 +10,7 @@ function ParseReactions(aElem)
   
   let output = ParseChemical(reaction[1]);
 
-  return { input: inputs, output: output };
+  return { input: inputs, output: output, u: false };
 }
 
 function ParseChemical(aElem) 
@@ -47,14 +47,6 @@ function FindFuel(aReactions)
       return aReactions[i];
 }
 
-function IsORE(aReactionPot) 
-{
-  for (let i = 0; i < aReactionPot.length; i++)
-    if (aReactionPot[i].r != 'ORE')
-      return false;
-  return true;
-}
-
 function CountORE(aReactionPot)
 {
   let count = 0;
@@ -65,22 +57,46 @@ function CountORE(aReactionPot)
   return count;
 }
 
-function GetInputs(aOutput, aReactions) 
+function FindInInput(aChemical, aReactions)
+{
+  for (let i = 0; i < aReactions.length; i++) 
+  {
+    if (aReactions[i].u)
+      continue;
+    let input = aReactions[i].input;
+
+    for (let j = 0; j < input.length; j++)
+      if (input[j].r == aChemical.r)
+        return true;
+  }
+
+  return false;
+}
+
+function GetInputs(aChemical, aReactions) 
 {
   for (let i = 0; i < aReactions.length; i++) 
   {
     let output = aReactions[i].output;
     let input = util.CopyObject(aReactions[i].input);
-    if (aOutput.r == output.r)
+    if (aChemical.r == output.r)
     {
-      if (aOutput.c > output.c) 
+      aReactions[i].u = true;
+
+      if (FindInInput(aChemical, aReactions))
       {
-        let factor = Math.ceil(aOutput.c / output.c);
+        aReactions[i].u = false;
+        return null;
+      }
+
+      if (aChemical.c > output.c) 
+      {
+        let factor = Math.ceil(aChemical.c / output.c);
         //console.log(factor);
         for (let j = 0; j < input.length; j++)
           input[j].c *= factor;
       }
-        
+      
       return input;
     }
   }
@@ -108,29 +124,20 @@ function AddToReactionPot(aReactionPot, aChemicals)
 function MakeReaction(aReactionPot, aReactions, aReduceORE) 
 {
   let reactionPot = [];
-  let count = 0;
   for (let i = 0; i < aReactionPot.length; i++)
-    if (aReactionPot[i].r != 'ORE')
+  {
+    let input = GetInputs(aReactionPot[i], aReactions);
+
+    if (input == null) 
     {
-      let input = GetInputs(aReactionPot[i], aReactions);
-
-      if (!aReduceORE && input[0].r == 'ORE') 
-      {
-        AddToReactionPot(reactionPot, [aReactionPot[i]]);
-        //reactionPot.push(aReactionPot[i]);
-        continue;
-      }
-
-      count++;
-
-      AddToReactionPot(reactionPot, input);
-      //for (let j = 0; j < input.length; j++)
-      //  reactionPot.push(input[j]);
+      AddToReactionPot(reactionPot, [aReactionPot[i]]);
+      continue;
     }
-    else
-      reactionPot.push(aReactionPot[i]);
 
-  return { pot: reactionPot, count: count };
+    AddToReactionPot(reactionPot, input);
+  }
+
+  return reactionPot;
 }
 
 var reactions = util.MapInput("./Day14TestInput4.txt", ParseReactions, "\r\n");
@@ -138,6 +145,7 @@ var reactions = util.MapInput("./Day14TestInput4.txt", ParseReactions, "\r\n");
 PrintReactions(reactions);
 
 var fuel = FindFuel(reactions);
+fuel.u = true;
 
 //PrintReactions([fuel]);
 
@@ -149,19 +157,10 @@ while (true)
   console.log();
   console.log(PrintChemicals(reactionPot));
 
-  let ret = MakeReaction(reactionPot, reactions, false);
+  reactionPot = MakeReaction(reactionPot, reactions);
 
-  if (ret.count == 0)
-  {
-    //let noDupPot = [];
-    //AddToReactionPot(noDupPot, reactionPot);
-    //console.log();
-    //console.log(PrintChemicals(noDupPot));
-    reactionPot = MakeReaction(reactionPot, reactions, true).pot;
+  if (reactionPot.length == 1)
     break;
-  }
-  else
-    reactionPot = ret.pot;
 }
 
 console.log(CountORE(reactionPot));

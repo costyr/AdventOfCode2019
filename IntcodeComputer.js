@@ -6,6 +6,11 @@ class IntcodeIOStream {
     this.mStreamPos = 0;
   }
 
+  StopProgram() 
+  {
+    return false;
+  }
+
   IsEndOfStream() {
     return this.mStreamPos >= this.mStream.length;
   }
@@ -55,6 +60,7 @@ const NO_ERROR = 0;
 const ERROR_INPUT_NEEDED = 1;
 const ERROR_PROGRAM_HALTED = 2;
 const ERROR_INVALID_INSTURCTION = 3;
+const ERROR_PROGRAM_STOPPED = 4;
 
 class IntcodeProgram {
 
@@ -145,6 +151,10 @@ class IntcodeProgram {
       return this.mErrorCode;
 
     for (let i = this.mInstPos; i < this.mInst.length;) {
+     
+      if (this.mInputStream.StopProgram())
+        return ERROR_PROGRAM_STOPPED;
+
       let detail = SplitInstruction(this.mInst[i]);
 
       let param3Mode = detail[0];

@@ -73,7 +73,7 @@ function FindInInput(aChemical, aReactions)
   return false;
 }
 
-function GetInputs(aChemical, aReactions) 
+function GetInputs(aChemical, aReactions, aComputeExact) 
 {
   for (let i = 0; i < aReactions.length; i++) 
   {
@@ -89,12 +89,19 @@ function GetInputs(aChemical, aReactions)
         return null;
       }
 
-      if (aChemical.c > output.c) 
+      if (aComputeExact) 
       {
-        let factor = Math.ceil(aChemical.c / output.c);
-        //console.log(factor);
         for (let j = 0; j < input.length; j++)
-          input[j].c *= factor;
+          input[j].c = (input[j].c / output.c) * aChemical.c;
+      }
+      else 
+      {
+        if (aChemical.c > output.c) 
+        {
+          let factor = Math.ceil(aChemical.c / output.c);
+          for (let j = 0; j < input.length; j++)
+            input[j].c *= factor;
+        }
       }
       
       return input;
@@ -121,12 +128,24 @@ function AddToReactionPot(aReactionPot, aChemicals)
   }
 }
 
-function MakeReaction(aReactionPot, aReactions, aReduceORE) 
+function MakeReaction(aReactionPot, aReactions, aComputeExact) 
 {
   let reactionPot = [];
   for (let i = 0; i < aReactionPot.length; i++)
   {
-    let input = GetInputs(aReactionPot[i], aReactions);
+    let found = false;
+    for (let j = 0; j < reactionPot.length; j++)
+      if (aReactionPot[i].r == reactionPot[j].r) 
+      {
+        reactionPot[j].c += aReactionPot[i].c;
+        found = true;
+        break;
+      }
+
+    if (found)
+      continue;
+
+    let input = GetInputs(aReactionPot[i], aReactions, aComputeExact);
 
     if (input == null) 
     {
@@ -140,27 +159,36 @@ function MakeReaction(aReactionPot, aReactions, aReduceORE)
   return reactionPot;
 }
 
-var reactions = util.MapInput("./Day14TestInput4.txt", ParseReactions, "\r\n");
-
-PrintReactions(reactions);
-
-var fuel = FindFuel(reactions);
-fuel.u = true;
-
-//PrintReactions([fuel]);
-
-var reactionPot = util.CopyObject(fuel.input);
-
-console.log();
-while (true)
+function ComputeOREPerFUEL(aReactions, aComputeExact) 
 {
-  console.log();
-  console.log(PrintChemicals(reactionPot));
+  let fuel = FindFuel(aReactions);
+  fuel.u = true;
 
-  reactionPot = MakeReaction(reactionPot, reactions);
+  let reactionPot = util.CopyObject(fuel.input);
 
-  if (reactionPot.length == 1)
-    break;
+  //console.log();
+  while (true)
+  {
+    //console.log();
+    //console.log(PrintChemicals(reactionPot));
+
+    reactionPot = MakeReaction(reactionPot, reactions, aComputeExact);
+
+    if (reactionPot.length == 1)
+      break;
+  }
+
+  return CountORE(reactionPot);
 }
 
-console.log(CountORE(reactionPot));
+var reactions = util.MapInput("./Day14Input.txt", ParseReactions, "\r\n");
+
+//PrintReactions(reactions);
+
+console.log(ComputeOREPerFUEL(reactions, false));
+
+var totalORE = 1000000000000;
+
+var orePerFuel = ComputeOREPerFUEL(reactions, true);
+
+console.log(Math.round(totalORE / orePerFuel));

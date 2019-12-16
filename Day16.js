@@ -3,45 +3,50 @@ const util = require('./Util.js');
 
 function ComputeFFT(aPhaseIndex, aSignalLength) 
 {
-  let base = [0, 1, 0, -1];
-  
-  let phasedBase = [];
-
-  for (let i = 0; i < base.length; i++)
-    for (let j = 0; j < aPhaseIndex + 1; j++)
-      phasedBase.push(base[i]);
-      
-  let fft = [];     
-  for (let i = 0; i < aSignalLength / phasedBase.length + 1; i++)
-  {
-    for (let j = 0; j < phasedBase.length; j++)
-      fft.push(phasedBase[j]);
-  }
-
-  return fft.slice(1, aSignalLength  + 1);
+  let fft = [];
+  for (let i = 0; i < aSignalLength; i++)
+    fft.push(GetFFT(aPhaseIndex, i));
+  return fft;
 }
 
-function ComputeFFTMap(aPhaseLength, aOffset, aTotal) 
+function GetFFT(aPhaseIndex, aPos) 
+{
+  let base = [0, 1, 0, -1];
+  
+  let phaseLen = (aPhaseIndex + 1);
+
+  let pos = Math.floor((aPos + 1) / phaseLen);
+
+  let index = pos % 4;
+  
+  return base[index];
+}
+
+function ComputeFFTMap(aPhaseLength, aOffset) 
 {
   let fftMap = [];
-  for (let i = 0; i < aTotal; i++) 
+  for (let i = 0; i < aPhaseLength - aOffset; i++) 
   {
+    console.log(i);
     let fft = ComputeFFT(aOffset + i, aPhaseLength);
-    fftMap[i] = fft.slice(aOffset, aOffset + aTotal);
+    fftMap[i] = fft;
   }
   
   return fftMap;
 }
 
-function ComputePhase(aPhase, aFFTMap) 
+function ComputePhase(aPhase, aOffset) 
 {
   let newPhase = [];
   for (let i = 0; i < aPhase.length; i++)
   { 
-    let fft = aFFTMap[i];
     let total = 0; 
-    for (let j = 0; j < aPhase.length; j++)
-      total += aPhase[j] * fft[j];
+    for (let j = 0; j < aPhase.length; j++) 
+    {
+      let fft = GetFFT(aOffset + i, j);
+      let phase = aPhase[j];
+      total += phase * fft;
+    }
     newPhase.push(Math.abs(total) % 10);
   }
   
@@ -84,12 +89,13 @@ function PrintFFTMap(aFFTMap)
     console.log(lines);
 }
 
-function Transform(aSignal, aPhaseCount, aFFTMap) 
+function Transform(aSignal, aPhaseCount, aOffset) 
 {
   let phase = util.CopyObject(aSignal);
   for (let i = 0; i < aPhaseCount; i++) 
   { 
-    phase = ComputePhase(phase, aFFTMap);
+    console.log(phase);
+    phase = ComputePhase(phase, aOffset);
   }
 
   return phase.slice(0, 8);
@@ -121,22 +127,22 @@ var signal = util.MapInput('./Day16TestInput2.txt', util.ParseInt, '');
 
 //ComputeFFT(1, signal.length);
 
-let fftMap = ComputeFFTMap(signal.length, 0, signal.length);
+let fftMap = ComputeFFTMap(signal.length, 16);
 
 PrintFFTMap(fftMap);
 
-console.log(Transform(signal, 100, fftMap));
+//console.log(Transform(signal, 100, 0));
 
 /*let amplifiedSignal = AmplifySignal(signal, 10000);
 
 let messageOffset = ComputeMessageOffset(amplifiedSignal);
 
-let fftMap = ComputeFFTMap(amplifiedSignal.length, messageOffset, 8);
+//let fftMap = ComputeFFTMap(amplifiedSignal.length, messageOffset);
 
-PrintFFTMap(fftMap);
+//PrintFFTMap(fftMap);
 
 console.log(messageOffset);
  
-let jj = Transform(amplifiedSignal.slice(messageOffset, messageOffset + 8), 100, fftMap);
+let jj = Transform(amplifiedSignal.slice(messageOffset), 100, messageOffset);
 
 PrintPhase(jj, 0, jj.length, false);*/

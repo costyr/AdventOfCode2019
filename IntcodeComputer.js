@@ -151,9 +151,6 @@ class IntcodeProgram {
       return this.mErrorCode;
 
     for (let i = this.mInstPos; i < this.mInst.length;) {
-     
-      if (this.mInputStream.StopProgram())
-        return ERROR_PROGRAM_STOPPED;
 
       let detail = SplitInstruction(this.mInst[i]);
 

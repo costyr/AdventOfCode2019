@@ -96,7 +96,7 @@ class RemoteControl {
 
     let dirs = [posNorth, posSouth, posWest, posEast];
     let validDirs = 0;
-    for (let i = 0; i < dirs; i++)
+    for (let i = 0; i < dirs.length; i++)
       if (dirs[i] == EMPTY)
         validDirs ++;
     

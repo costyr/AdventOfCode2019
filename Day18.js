@@ -378,7 +378,16 @@ function FindPath2(aMap, aAllKeys, aAllDoors)
 
   let graph = [];
 
-  FindAccessible(aMap, graph, '@', startPos, aAllKeys, aAllDoors, "@");
+  let stack = [ { key: '@', inherited: "" } ];
+
+  while (stack.length > 0) 
+  {
+    let current = stack.pop();
+
+    let accessibleKeys = FindAccessible(aMap, graph, current.key, startPos, aAllKeys, aAllDoors, current.inherited);
+    
+    
+  }
 
   for (key in graph)
     console.log(key + "-->" + JSON.stringify(graph[key]));

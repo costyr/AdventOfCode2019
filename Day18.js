@@ -324,7 +324,7 @@ function GetKeyPos(aAllKeys, aKey)
   return null;
 }
 
-function FindAccessible(aMap, aGraph, aKey, aPos, aAllKeys, aAllDoors, aStageKeys) 
+function FindAccessible(aMap, aGraph, aKey, aPos, aAllKeys, aAllDoors, aStageKeys, aCost) 
 {
   let map = util.CopyObject(aMap);
 
@@ -334,41 +334,26 @@ function FindAccessible(aMap, aGraph, aKey, aPos, aAllKeys, aAllDoors, aStageKey
   
   let accessibleKeys = GetAccessibleKeys(costMap, aAllKeys, aKey);
 
-  console.log(aStageKeys);
-
-  if (accessibleKeys.length == 0)
-    return; 
-   
-  let minCost = Number.MAX_SAFE_INTEGER;
-  let minAccessibleKey = null;
   for (let i = 0; i < accessibleKeys.length; i++) 
   {
-    if (aStageKeys.indexOf(accessibleKeys[i].key) >= 0)
+    let newKey = accessibleKeys[i].key;
+    let cost = aCost + accessibleKeys[i].cost;
+    let newKeyPos = GetKeyPos(aAllKeys, newKey);
+
+    if (aStageKeys.indexOf(newKey) >= 0)
       continue;
-
-    let cost = accessibleKeys[i].cost;
-    if (cost < minCost) 
-    {
-      minCost = cost;
-      minAccessibleKey = accessibleKeys[i];
-    }
-  }
-
-  if (minAccessibleKey == null)
-    return;
   
-  let newKey = minAccessibleKey.key;
-  let newKeyPos = GetKeyPos(aAllKeys, newKey);
+    let newStageKeys = util.CopyObject(aStageKeys);
+    newStageKeys += newKey;
 
-  let newStageKeys = util.CopyObject(aStageKeys);
-  newStageKeys += newKey;
+    let graphNode = newStageKeys;
 
-  let graphNode = newStageKeys;
-
-  if (aGraph[graphNode] == undefined) 
-  {
-    aGraph[graphNode] = minCost;
-    FindAccessible(map, aGraph, newKey, newKeyPos, aAllKeys, aAllDoors, newStageKeys);
+    if (aGraph[graphNode] == undefined) 
+    {
+      aGraph[graphNode] = cost;
+      console.log(graphNode + "-->" + cost + " " + (allKeys.length == graphNode.length));
+      FindAccessible(map, aGraph, newKey, newKeyPos, aAllKeys, aAllDoors, newStageKeys, cost);
+    }
   }
 }
 
@@ -378,19 +363,20 @@ function FindPath2(aMap, aAllKeys, aAllDoors)
 
   let graph = [];
 
-  let stack = [ { key: '@', inherited: "" } ];
+  FindAccessible(aMap, graph, '@', startPos, aAllKeys, aAllDoors, "", 0);
 
-  while (stack.length > 0) 
+  let minCost = Number.MAX_SAFE_INTEGER;
+  let path;
+  for (key in graph) 
   {
-    let current = stack.pop();
-
-    let accessibleKeys = FindAccessible(aMap, graph, current.key, startPos, aAllKeys, aAllDoors, current.inherited);
-    
-    
+    if ((key.length == allKeys.length) && (graph[key] < minCost)) 
+    {
+      minCost = graph[key];
+      path = key;
+    }
   }
 
-  for (key in graph)
-    console.log(key + "-->" + JSON.stringify(graph[key]));
+  console.log(path + "-->" + graph[path]);
 }
 
 var map = util.MapInput("./Day18TestInput3.txt", ParseMap, "\r\n");
@@ -401,4 +387,5 @@ PrintMap(map);
 var allKeys = GetAllKeys(map);
 var allDoors = GetAllDoors(map);
 
+console.log(allKeys.length);
 FindPath2(map, allKeys, allDoors);

@@ -1,4 +1,5 @@
 const util = require('./Util.js');
+const matrix = require('./Matrix.js');
 const intcodeComputer = require('./IntcodeComputer.js');
 
 const ID_WALL = 0;
@@ -7,21 +8,12 @@ const ID_OXYGEN_SYSTEM = 2;
 
 const EMPTY = 0;
 const WALL = 1;
-const NO_PATH = 3;
+const NOT_VISITED = 4;
 
 const DIR_NORTH = 1;
 const DIR_SOUTH = 2;
 const DIR_WEST = 3;
 const DIR_EAST = 4;
-
-class Node {
-  constructor(aX, aY, aDir) {
-    this.mX = aX;
-    this.mY = aY;
-    this.mDir = aDir;
-    this.mPath = [];
-  }
-}
 
 class RemoteControl {
   constructor() {
@@ -32,21 +24,17 @@ class RemoteControl {
     this.mMap = [];
   }
 
-  StopProgram() 
-  {
-    return false;
-  }
-
   IsEndOfStream() {
     return false;
   }
 
   Read() {
+    if (this.mDir > DIR_EAST || this.mDir < DIR_NORTH)
+      console.log("Invalid position!");
     return this.mDir;
   }
 
   Write(aValue) {
-
     if (aValue == ID_MOVED)
     {
       if (this.mDir == DIR_NORTH)
@@ -60,33 +48,32 @@ class RemoteControl {
       
       this.AddToMap(this.mX, this.mY, EMPTY);
     }
-    else if (aValue == ID_WALL)
+    else if ((aValue == ID_WALL) || 
+             (aValue == ID_OXYGEN_SYSTEM))
     {
+      let value = (aValue == ID_OXYGEN_SYSTEM) ? ID_OXYGEN_SYSTEM : WALL;
+      let x = this.mX;
+      let y = this.mY;
+
       if (this.mDir == DIR_NORTH)
-        this.AddToMap(this.mX, this.mY + 1, WALL);
+        y++;
       else if (this.mDir == DIR_SOUTH)
-        this.AddToMap(this.mX, this.mY - 1, WALL);
+        y--;
       else if (this.mDir == DIR_WEST)
-        this.AddToMap(this.mX - 1, this.mY, WALL);
+        x--;
       else if (this.mDir == DIR_EAST)
-        this.AddToMap(this.mX + 1, this.mY, WALL);
+        x++;
       else
         console.log("Invalid direction!" + ID_WALL);
-    }
-    else if (aValue == ID_OXYGEN_SYSTEM)
-    {
-      if (this.mDir == DIR_NORTH)
-        this.AddToMap(this.mX, this.mY + 1, ID_OXYGEN_SYSTEM);
-      else if (this.mDir == DIR_SOUTH)
-        this.AddToMap(this.mX, this.mY - 1, ID_OXYGEN_SYSTEM);
-      else if (this.mDir == DIR_WEST)
-        this.AddToMap(this.mX - 1, this.mY, ID_OXYGEN_SYSTEM);
-      else if (this.mDir == DIR_EAST)
-        this.AddToMap(this.mX + 1, this.mY, ID_OXYGEN_SYSTEM);
-      else
-        console.log("Invalid direction!");
 
-      console.log("Oxygen system! " + this.mMap.length);
+      this.AddToMap(x, y, value);
+
+      if (aValue == ID_OXYGEN_SYSTEM)
+        console.log("Oxygen system! " + this.mMap.length);
+    }
+    else
+    {
+      console.log("Invalid output code!");
     }
 
     let posNorth = this.GetNext(this.mX, this.mY, DIR_NORTH);
@@ -97,22 +84,35 @@ class RemoteControl {
     let dirs = [posNorth, posSouth, posWest, posEast];
     let validDirs = 0;
     for (let i = 0; i < dirs.length; i++)
-      if (dirs[i] == EMPTY)
+      if (dirs[i] == EMPTY || dirs[i] == NOT_VISITED)
         validDirs ++;
     
     if (validDirs <= 1)
-      this.AddToMap(this.mX, this.mY, NO_PATH);
-    
-    if (posNorth == EMPTY)
-      this.mDir = DIR_NORTH;
-    else if (posSouth == EMPTY)
-      this.mDir = DIR_SOUTH;
-    else if (posWest == EMPTY)
-      this.mDir = DIR_WEST;
-    else if (posEast == EMPTY)
-      this.mDir = DIR_EAST;
-    else
-      console.log("Invalid position!");
+    {
+      if (this.mDir == DIR_NORTH)
+        this.mDir = DIR_SOUTH;
+      else if (this.mDir == DIR_SOUTH)
+        this.mDir = DIR_NORTH;
+      else if (this.mDir == DIR_WEST)
+        this.mDir = DIR_EAST;
+      else
+        this.mDir = DIR_WEST;
+    }
+    else 
+    {
+      if (posNorth == NOT_VISITED)
+        this.mDir = DIR_NORTH;
+      else if (posSouth == NOT_VISITED)
+        this.mDir = DIR_SOUTH;
+      else if (posWest == NOT_VISITED)
+        this.mDir = DIR_WEST;
+      else if (posEast == NOT_VISITED)
+        this.mDir = DIR_EAST;
+      else
+        console.log("Invalid position!");
+
+      this.PrintMap({x: this.mX, y: this.mY});
+    }
   }
 
   GetNext(aX, aY, aDir) 
@@ -129,7 +129,7 @@ class RemoteControl {
     let mapPos = this.FindMapPoint(aX, aY);
     if (mapPos)
       return mapPos.v;
-    return EMPTY;
+    return NOT_VISITED;
   }
 
   FindMapPoint(aX, aY) 
@@ -154,9 +154,53 @@ class RemoteControl {
       this.mMap.push({ x: aX, y: aY, v: aValue});
   }
 
-  PrintMap()
+  GetMaxXY() 
   {
-    console.log(this.mMap);
+    let maxX = 0;
+    let minX = Number.MAX_SAFE_INTEGER;
+    let maxY = 0;
+    let minY = Number.MAX_SAFE_INTEGER;
+    for (let i = 0; i < this.mMap.length; i++)
+    {
+      maxX = Math.max(this.mMap[i].x, maxX);
+
+      maxY = Math.max(this.mMap[i].y, maxY);
+
+      minX = Math.min(this.mMap[i].x, minX);
+
+      minY = Math.min(this.mMap[i].y, minY);
+    }
+
+    return { min: { x: minX, y: minY }, max: { x: maxX, y: maxY} };
+  }
+
+  PrintMap(aPos)
+  {
+    let minMax = this.GetMaxXY();
+
+    let width = Math.abs(minMax.min.x) + Math.abs(minMax.max.x) + 1;
+    let height = Math.abs(minMax.min.y) + Math.abs(minMax.max.y) + 1;
+
+    let screen = new matrix.Matrix(width, height, ".");
+
+    let posX = aPos.x + Math.abs(minMax.min.x);
+    let posY = aPos.y + Math.abs(minMax.min.y);
+
+    for (let i = 0; i < this.mMap.length; i++) 
+    {
+      let x = this.mMap[i].x + Math.abs(minMax.min.x);
+      let y = this.mMap[i].y + Math.abs(minMax.min.y);
+
+      if (this.mMap[i].v == WALL)
+        screen.SetValue(y, x, "#");
+      else if (this.mMap[i].v == ID_OXYGEN_SYSTEM)
+        screen.SetValue(y, x, "o");
+
+      if (posX == x && posY == y)
+        screen.SetValue(y, x, "x");
+    }
+
+    screen.PrintReverse();
   }
 }
 

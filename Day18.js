@@ -241,14 +241,14 @@ function UnlockDoors(aMap, aAllDoors, aKeys)
     UnlockDoor(aMap, aAllDoors, aKeys[i]);
 }
 
-function InitCostMap(aMap) 
+function InitCostMap(aMap, aValue) 
 {
   let costMap = [];
   for (let i = 0; i < aMap.length; i++) 
   {
     costMap[i] = [];
     for (let j = 0; j < aMap[i].length; j++)
-      costMap[i][j] = -1;
+      costMap[i][j] = aValue;
   }
 
   return costMap;
@@ -263,22 +263,36 @@ function ResetCostMap(aCostMap)
 
 function GetCost(aCostMap, aPos) 
 {
+  if ((aCostMap[aPos.y] == undefined) || 
+      (aCostMap[aPos.y][aPos.x] == undefined))
+    return -1;
   return aCostMap[aPos.y][aPos.x];
 }
 
 function SetCost(aCostMap, aPos, aCost) 
 {
+  if (aCostMap[aPos.y] == undefined)
+    aCostMap[aPos.y] = [];
   aCostMap[aPos.y][aPos.x] = aCost;
 }
 
-function ComputeLee(aMap, aStart) 
+function ComputeLee(aMap, aStart, aStageKeys, aAllKeys) 
 {
-  let costMap = InitCostMap(aMap);
+  let targetPoints = [];
+  if (aStageKeys.length > 0) 
+  {
+    for (let i = 0; i < aAllKeys.length; i++)
+      if (aStageKeys.indexOf(aAllKeys[i].key) == -1)
+        targetPoints.push(aAllKeys[i].pos);
+  }
+
+  let costMap = []; // InitCostMap(aMap, -1);
   let stack = [aStart];
 
   SetCost(costMap, aStart, 0);
   
   let pos;
+  let targetCount = 0;
   while (stack.length > 0)
   {
     pos = stack.pop();
@@ -292,6 +306,18 @@ function ComputeLee(aMap, aStart)
         continue;
 
       SetCost(costMap, directions[i], cost + 1);
+
+      if (aStageKeys.length > 0) 
+      {
+        for (let j = 0; j < targetPoints.length; j++)
+          if ((directions[i].x == targetPoints[j].x) &&
+              (directions[i].y == targetPoints[j].y))
+            targetCount ++;
+
+        if (targetCount >= targetPoints.length)
+          break;
+      }
+
       stack.push(directions[i]);
     }
   }
@@ -338,6 +364,8 @@ function ComputeMinTwoKeyCost(aMap, aAllDoors, aAllKeys)
 {
   let map = util.CopyObject(aMap);
 
+  let accessibleMap = InitCostMap(aMap, []);
+
   let allKeys = "";
   for (let i = 0; i < aAllKeys.length; i++)
     allKeys += aAllKeys[i].key;
@@ -347,9 +375,12 @@ function ComputeMinTwoKeyCost(aMap, aAllDoors, aAllKeys)
   let minCost = Number.MAX_SAFE_INTEGER;
   for (let i = 0; i < aAllKeys.length; i++)
   {
-    let costMap = ComputeLee(map, aAllKeys[i].pos);
+    let pos = aAllKeys[i].pos;
+    let costMap = ComputeLee(map, pos, "", aAllKeys);
   
     let accessibleKeys = GetAccessibleKeys(costMap, aAllKeys, aAllKeys[i].key);
+
+    accessibleMap[pos.y][pos.x] = accessibleKeys;
     
     for (let j = 0; j < accessibleKeys.length; j++) 
     {
@@ -361,20 +392,24 @@ function ComputeMinTwoKeyCost(aMap, aAllDoors, aAllKeys)
         minCost = cost;
     }
   }
-  return minCost;  
+  return { map: accessibleMap, min: minCost };  
 }
 
-function FindAccessible(aMap, aGraph, aKey, aPos, aAllKeys, aAllDoors, aStageKeys, aCost, aMinCostTwoKeys) 
-{
-  let map = util.CopyObject(aMap);
+function FindAccessible(aMap, aGraph, aKey, aPos, aAllKeys, aAllDoors, aStageKeys, aCost, aCostMap) 
+{ 
+  let accessibleKeys = aCostMap.map[aPos.y][aPos.x];
+  if (aStageKeys.length < aAllKeys.length) 
+  {
+    let map = util.CopyObject(aMap);
 
-  UnlockDoors(map, aAllDoors, aStageKeys);
+    UnlockDoors(map, aAllDoors, aStageKeys);
 
-  let costMap = ComputeLee(map, aPos);
-  
-  let accessibleKeys = GetAccessibleKeys(costMap, aAllKeys, aKey);
+    let costMap = ComputeLee(map, aPos, aStageKeys, aAllKeys);
 
-  accessibleKeys.sort(SortByCost);
+    accessibleKeys = GetAccessibleKeys(costMap, aAllKeys, aKey);
+  }
+
+  //accessibleKeys.sort(SortByCost);
 
   for (let i = 0; i < accessibleKeys.length; i++) 
   {
@@ -390,7 +425,7 @@ function FindAccessible(aMap, aGraph, aKey, aPos, aAllKeys, aAllDoors, aStageKey
 
     let graphNode = newStageKeys;
 
-    let costEstimate = cost + (aAllKeys.length - graphNode.length) * aMinCostTwoKeys; 
+    let costEstimate = cost + (aAllKeys.length - graphNode.length) * aCostMap.min; 
 
     if (costEstimate >= aGraph.min)
       continue;
@@ -406,7 +441,8 @@ function FindAccessible(aMap, aGraph, aKey, aPos, aAllKeys, aAllDoors, aStageKey
     }
     else
     {
-      FindAccessible(map, aGraph, newKey, newKeyPos, aAllKeys, aAllDoors, newStageKeys, cost, aMinCostTwoKeys);
+      console.log(newStageKeys + "-->" + cost + " " + costEstimate);
+      FindAccessible(map, aGraph, newKey, newKeyPos, aAllKeys, aAllDoors, newStageKeys, cost, aCostMap);
     }
   }
 }
@@ -417,26 +453,16 @@ function FindPath2(aMap, aAllKeys, aAllDoors)
 
   let graph = { path: "", min: Number.MAX_SAFE_INTEGER };
 
-  let minTwoKeysCost = ComputeMinTwoKeyCost(aMap, allDoors, allKeys);
+  let costMap = ComputeMinTwoKeyCost(aMap, allDoors, allKeys);
   
-  console.log(minTwoKeysCost);
+  console.log(costMap.min);
 
-  FindAccessible(aMap, graph, '@', startPos, aAllKeys, aAllDoors, "", 0, minTwoKeysCost);
-
-  let minCost = Number.MAX_SAFE_INTEGER;
-  for (key in graph) 
-  {
-    if ((key.length == allKeys.length) && (graph[key] < minCost)) 
-    {
-      minCost = graph[key];
-      path = key;
-    }
-  }
+  FindAccessible(aMap, graph, '@', startPos, aAllKeys, aAllDoors, "", 0, costMap);
 
   console.log(graph.path + "-->" + graph.min);
 }
 
-var map = util.MapInput("./Day18TestInput3.txt", ParseMap, "\r\n");
+var map = util.MapInput("./Day18TestInput2.txt", ParseMap, "\r\n");
 
 PrintMap(map);
 

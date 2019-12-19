@@ -25,6 +25,11 @@ class Matrix {
     this.mMatix[aLine][aCol] = aValue;
   }
 
+  GetValue(aLine, aCol) 
+  {
+    return this.mMatix[aLine][aCol];
+  }
+
   Print()
   {
     for (let i = 0; i < this.mMatix.length; i++) 

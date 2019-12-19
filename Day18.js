@@ -324,6 +324,16 @@ function GetKeyPos(aAllKeys, aKey)
   return null;
 }
 
+function SortByCost(aKey1, aKey2) 
+{
+  if (aKey1.cost < aKey2.cost)
+    return -1;
+  else if (aKey1.cost > aKey2.cost)
+    return 1;
+  else 
+    return 0;
+}
+
 function FindAccessible(aMap, aGraph, aKey, aPos, aAllKeys, aAllDoors, aStageKeys, aCost) 
 {
   let map = util.CopyObject(aMap);
@@ -333,6 +343,8 @@ function FindAccessible(aMap, aGraph, aKey, aPos, aAllKeys, aAllDoors, aStageKey
   let costMap = ComputeLee(map, aPos);
   
   let accessibleKeys = GetAccessibleKeys(costMap, aAllKeys, aKey);
+
+  accessibleKeys.sort(SortByCost);
 
   for (let i = 0; i < accessibleKeys.length; i++) 
   {
@@ -348,10 +360,20 @@ function FindAccessible(aMap, aGraph, aKey, aPos, aAllKeys, aAllDoors, aStageKey
 
     let graphNode = newStageKeys;
 
-    if (aGraph[graphNode] == undefined) 
+    if (cost > aGraph.min)
+      continue;
+
+    if (graphNode.length == allKeys.length) 
     {
-      aGraph[graphNode] = cost;
-      console.log(graphNode + "-->" + cost + " " + (allKeys.length == graphNode.length));
+      if (cost < aGraph.min) 
+      {
+        aGraph.path = graphNode;
+        aGraph.min = cost;
+        console.log(graphNode + "-->" + cost);
+      }
+    }
+    else
+    {
       FindAccessible(map, aGraph, newKey, newKeyPos, aAllKeys, aAllDoors, newStageKeys, cost);
     }
   }
@@ -361,12 +383,11 @@ function FindPath2(aMap, aAllKeys, aAllDoors)
 {
   let startPos = FindStart(aMap);
 
-  let graph = [];
+  let graph = { path: "", min: Number.MAX_SAFE_INTEGER };
 
   FindAccessible(aMap, graph, '@', startPos, aAllKeys, aAllDoors, "", 0);
 
   let minCost = Number.MAX_SAFE_INTEGER;
-  let path;
   for (key in graph) 
   {
     if ((key.length == allKeys.length) && (graph[key] < minCost)) 
@@ -376,10 +397,10 @@ function FindPath2(aMap, aAllKeys, aAllDoors)
     }
   }
 
-  console.log(path + "-->" + graph[path]);
+  console.log(graph.path + "-->" + graph.min);
 }
 
-var map = util.MapInput("./Day18TestInput3.txt", ParseMap, "\r\n");
+var map = util.MapInput("./Day18Input.txt", ParseMap, "\r\n");
 var stateMap = CreateStateMap(map);
 
 PrintMap(map);

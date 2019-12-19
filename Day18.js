@@ -334,7 +334,37 @@ function SortByCost(aKey1, aKey2)
     return 0;
 }
 
-function FindAccessible(aMap, aGraph, aKey, aPos, aAllKeys, aAllDoors, aStageKeys, aCost) 
+function ComputeMinTwoKeyCost(aMap, aAllDoors, aAllKeys) 
+{
+  let map = util.CopyObject(aMap);
+
+  let allKeys = "";
+  for (let i = 0; i < aAllKeys.length; i++)
+    allKeys += aAllKeys[i].key;
+
+  UnlockDoors(map, aAllDoors, allKeys);
+
+  let minCost = Number.MAX_SAFE_INTEGER;
+  for (let i = 0; i < aAllKeys.length; i++)
+  {
+    let costMap = ComputeLee(map, aAllKeys[i].pos);
+  
+    let accessibleKeys = GetAccessibleKeys(costMap, aAllKeys, aAllKeys[i].key);
+    
+    for (let j = 0; j < accessibleKeys.length; j++) 
+    {
+      if (accessibleKeys[j].key == aAllKeys[i].key)
+        continue;
+
+      let cost = accessibleKeys[j].cost;
+      if (cost < minCost)
+        minCost = cost;
+    }
+  }
+  return minCost;  
+}
+
+function FindAccessible(aMap, aGraph, aKey, aPos, aAllKeys, aAllDoors, aStageKeys, aCost, aMinCostTwoKeys) 
 {
   let map = util.CopyObject(aMap);
 
@@ -360,7 +390,9 @@ function FindAccessible(aMap, aGraph, aKey, aPos, aAllKeys, aAllDoors, aStageKey
 
     let graphNode = newStageKeys;
 
-    if (cost > aGraph.min)
+    let costEstimate = cost + (aAllKeys.length - graphNode.length) * aMinCostTwoKeys; 
+
+    if (costEstimate >= aGraph.min)
       continue;
 
     if (graphNode.length == allKeys.length) 
@@ -374,7 +406,7 @@ function FindAccessible(aMap, aGraph, aKey, aPos, aAllKeys, aAllDoors, aStageKey
     }
     else
     {
-      FindAccessible(map, aGraph, newKey, newKeyPos, aAllKeys, aAllDoors, newStageKeys, cost);
+      FindAccessible(map, aGraph, newKey, newKeyPos, aAllKeys, aAllDoors, newStageKeys, cost, aMinCostTwoKeys);
     }
   }
 }
@@ -385,7 +417,11 @@ function FindPath2(aMap, aAllKeys, aAllDoors)
 
   let graph = { path: "", min: Number.MAX_SAFE_INTEGER };
 
-  FindAccessible(aMap, graph, '@', startPos, aAllKeys, aAllDoors, "", 0);
+  let minTwoKeysCost = ComputeMinTwoKeyCost(aMap, allDoors, allKeys);
+  
+  console.log(minTwoKeysCost);
+
+  FindAccessible(aMap, graph, '@', startPos, aAllKeys, aAllDoors, "", 0, minTwoKeysCost);
 
   let minCost = Number.MAX_SAFE_INTEGER;
   for (key in graph) 
@@ -400,8 +436,7 @@ function FindPath2(aMap, aAllKeys, aAllDoors)
   console.log(graph.path + "-->" + graph.min);
 }
 
-var map = util.MapInput("./Day18Input.txt", ParseMap, "\r\n");
-var stateMap = CreateStateMap(map);
+var map = util.MapInput("./Day18TestInput3.txt", ParseMap, "\r\n");
 
 PrintMap(map);
 

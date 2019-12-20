@@ -352,13 +352,15 @@ function FindShortestPath2(aCostMap, aStart, aEnd)
 {
   let innerPortals = GetInnerPortals(aCostMap);
   let start = aStart;
-  let minDist = Number.MAX_SAFE_INTEGER;
-  let minDistNode = aStart;
+  let minDistNode = aStart; 
+  delete aCostMap["AA"];
+  delete aCostMap["ZZ"];
 
   let level = 0;
   let totalDist = 0;
   while (true) 
   {
+    let minDist = Number.MAX_SAFE_INTEGER;
     let costMap = (level == 0) ? innerPortals : aCostMap;
     for (let node in costMap)
     {
@@ -380,13 +382,13 @@ function FindShortestPath2(aCostMap, aStart, aEnd)
     if (minDistNode.endsWith(1))
     {
       level --;
-      if (minDistNode.endsWith("1") && (minDistNode != "ZZ"))
-        start = minDistNode.substr(0, minDistNode.length - 1);  
+      if (minDistNode.endsWith("1") && (minDistNode != "ZZ")) 
+        start = minDistNode.substr(0, minDistNode.length - 1);
     }
     else
     {
       level ++;
-      if (!minDistNode.endsWith("1") && (minDistNode != "ZZ"))
+      if (!minDistNode.endsWith("1") && (minDistNode != "ZZ")) 
         start = minDistNode + "1";
     }
 

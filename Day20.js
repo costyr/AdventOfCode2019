@@ -241,11 +241,12 @@ function GetInnerPortals(aCostMap)
   let innerPortals = [];
   for (let portal in aCostMap)
   {
-    if (portal.endsWith("1"))
+    if (portal.endsWith("1") ||
+        (portal == "ZZ"))
       continue;
     
     let dists = [];
-    for (let i = 0; aCostMap[portal].length; i++) 
+    for (let i = 0; i < aCostMap[portal].length; i++) 
     {
       if (aCostMap[portal][i].id.endsWith("1") || 
          (aCostMap[portal][i].id == "ZZ"))
@@ -254,7 +255,8 @@ function GetInnerPortals(aCostMap)
       dists.push(aCostMap[portal][i]);
     }
 
-    innerPortals[portal] = dists;
+    if (dists.length > 0)
+      innerPortals[portal] = dists;
   }
   
   return innerPortals;
@@ -293,13 +295,17 @@ function FindShortestPath(aCostMap, aStart, aEnd)
 
   let path = [];
 
+  let foundEnd = false;
   while (queue.length > 0) 
   {
     let currentNode = queue.shift();
     let currentDist = distMap[currentNode].dist;
 
     if (currentNode == aEnd)
+    {
+      foundEnd = true;
       break;
+    }
 
     let neighbours = aCostMap[currentNode];    
 
@@ -322,6 +328,9 @@ function FindShortestPath(aCostMap, aStart, aEnd)
     distMap[currentNode].visited = true;
     queue.sort(SortByDist.bind(null, distMap));
   }
+
+  if (!foundEnd)
+    return Number.MAX_SAFE_INTEGER;
 
   let portalsPath = [];
   let next = aEnd;
@@ -370,14 +379,16 @@ function FindShortestPath2(aCostMap, aStart, aEnd)
 
     if (minDistNode.endsWith(1))
     {
-      level --;  
+      level --;
+      if (minDistNode.endsWith("1") && (minDistNode != "ZZ"))
+        start = minDistNode.substr(0, minDistNode.length - 1);  
     }
     else
     {
       level ++;
+      if (!minDistNode.endsWith("1") && (minDistNode != "ZZ"))
+        start = minDistNode + "1";
     }
-
-    start = minDistNode;
 
     if ((level == 0) && (minDistNode == aEnd))
       break;

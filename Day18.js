@@ -373,6 +373,7 @@ function ComputeMinTwoKeyCost(aMap, aAllDoors, aAllKeys)
   UnlockDoors(map, aAllDoors, allKeys);
 
   let minCost = Number.MAX_SAFE_INTEGER;
+  let maxCost = 0;
   for (let i = 0; i < aAllKeys.length; i++)
   {
     let pos = aAllKeys[i].pos;
@@ -390,9 +391,12 @@ function ComputeMinTwoKeyCost(aMap, aAllDoors, aAllKeys)
       let cost = accessibleKeys[j].cost;
       if (cost < minCost)
         minCost = cost;
+
+      if (cost > maxCost)
+        maxCost = cost;  
     }
   }
-  return { map: accessibleMap, min: minCost };  
+  return { map: accessibleMap, min: minCost, max: maxCost };  
 }
 
 function FindAccessible(aMap, aGraph, aKey, aPos, aAllKeys, aAllDoors, aStageKeys, aCost, aCostMap) 
@@ -409,7 +413,7 @@ function FindAccessible(aMap, aGraph, aKey, aPos, aAllKeys, aAllDoors, aStageKey
     accessibleKeys = GetAccessibleKeys(costMap, aAllKeys, aKey);
   }
 
-  //accessibleKeys.sort(SortByCost);
+  accessibleKeys.sort(SortByCost);
 
   for (let i = 0; i < accessibleKeys.length; i++) 
   {
@@ -425,25 +429,27 @@ function FindAccessible(aMap, aGraph, aKey, aPos, aAllKeys, aAllDoors, aStageKey
 
     let graphNode = newStageKeys;
 
-    let costEstimate = cost + (aAllKeys.length - graphNode.length) * aCostMap.min; 
+    let minCostEstimate = cost + (aAllKeys.length - graphNode.length) * aCostMap.min;
+    let maxCostEstimate = cost + (aAllKeys.length - graphNode.length) * aCostMap.max;  
 
-    if (costEstimate >= aGraph.min)
+    if (minCostEstimate >= aGraph.min)
       continue;
 
-    if (graphNode.length == allKeys.length) 
-    {
-      if (cost < aGraph.min) 
+      if (maxCostEstimate < aGraph.min) 
       {
         aGraph.path = graphNode;
-        aGraph.min = cost;
+        aGraph.min = maxCostEstimate;
         console.log(graphNode + "-->" + cost);
       }
-    }
-    else
+      
+    if (graphNode.length < allKeys.length) 
     {
-      console.log(newStageKeys + "-->" + cost + " " + costEstimate);
+      //console.log(newStageKeys + "-->" + cost + " " + minCostEstimate + " " + maxCostEstimate);
       FindAccessible(map, aGraph, newKey, newKeyPos, aAllKeys, aAllDoors, newStageKeys, cost, aCostMap);
     }
+
+    if (cost > aGraph.min)
+      return;
   }
 }
 
@@ -456,13 +462,14 @@ function FindPath2(aMap, aAllKeys, aAllDoors)
   let costMap = ComputeMinTwoKeyCost(aMap, allDoors, allKeys);
   
   console.log(costMap.min);
+  console.log(costMap.max);
 
   FindAccessible(aMap, graph, '@', startPos, aAllKeys, aAllDoors, "", 0, costMap);
 
   console.log(graph.path + "-->" + graph.min);
 }
 
-var map = util.MapInput("./Day18TestInput2.txt", ParseMap, "\r\n");
+var map = util.MapInput("./Day18TestInput3.txt", ParseMap, "\r\n");
 
 PrintMap(map);
 

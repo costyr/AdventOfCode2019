@@ -1,19 +1,15 @@
 const util = require('./Util.js');
 
-function ParseLine(aElem) 
-{
-  return aElem.split("");  
+function ParseLine(aElem) {
+  return aElem.split("");
 }
 
-function ParseMap(aElem) 
-{
+function ParseMap(aElem) {
   return ParseLine(aElem);
 }
 
-function PrintMap(aMap) 
-{
-  for (let i = 0; i < aMap.length; i++)
-  {
+function PrintMap(aMap) {
+  for (let i = 0; i < aMap.length; i++) {
     let line = "";
     for (let j = 0; j < aMap[i].length; j++)
       line += aMap[i][j];
@@ -21,92 +17,81 @@ function PrintMap(aMap)
   }
 }
 
-function IsPortalMarker(aElem) 
-{
+function IsPortalMarker(aElem) {
   if ((aElem != '.') && (aElem != '#') && (aElem != ' '))
     return true;
   return false;
 }
 
-function GetMapValue(aMap, aX, aY) 
-{
+function GetMapValue(aMap, aX, aY) {
   if ((aY < 0) || (aY >= aMap.length) ||
-      (aX < 0) || (aX >= aMap[aY].length))
+    (aX < 0) || (aX >= aMap[aY].length))
     return ' ';
 
   return aMap[aY][aX];
 }
 
-function FindPortals(aMap) 
-{
+function FindPortals(aMap) {
   let portals = [];
   for (let i = 0; i < aMap.length; i++)
-    for (let j = 0; j < aMap[i].length; j++)
-    {
-      if (IsPortalMarker(aMap[i][j]))
-      {
-        if ((j < aMap[i].length - 1) && IsPortalMarker(aMap[i][j + 1]))
-        {
+    for (let j = 0; j < aMap[i].length; j++) {
+      if (IsPortalMarker(aMap[i][j])) {
+        if ((j < aMap[i].length - 1) && IsPortalMarker(aMap[i][j + 1])) {
           let portalId = aMap[i][j] + aMap[i][j + 1];
 
           let left = GetMapValue(aMap, j - 1, i);
           let right = GetMapValue(aMap, j + 2, i);
 
-          let x = (left == '.') && (right == ' ') ? j - 1 : 
-                  ((left == ' ') && (right == '.')) ? j + 2 : -1;
+          let x = (left == '.') && (right == ' ') ? j - 1 :
+            ((left == ' ') && (right == '.')) ? j + 2 : -1;
 
-          if (x == -1) 
-          {
+          if (x == -1) {
             console.log("Parsing error!")
             return;
           }
 
-          if (((j == 0) || (j == aMap[i].length - 2)) && 
-              (portalId != "AA") && (portalId != "ZZ"))
+          if (((j == 0) || (j == aMap[i].length - 2)) &&
+            (portalId != "AA") && (portalId != "ZZ"))
             portalId = portalId + "1";
 
-          portals[portalId] = { x: x, y: i }; 
+          portals[portalId] = { x: x, y: i };
         }
-        else if ((i < aMap.length - 1) && IsPortalMarker(aMap[i + 1][j]))
-        {
+        else if ((i < aMap.length - 1) && IsPortalMarker(aMap[i + 1][j])) {
           let portalId = aMap[i][j] + aMap[i + 1][j];
-          
+
           let top = GetMapValue(aMap, j, i - 1);
           let bottom = GetMapValue(aMap, j, i + 2);
 
-          let y = (top == '.') && (bottom == ' ') ? i - 1 : 
-                  ((top == ' ') && (bottom == '.')) ? i + 2 : -1;
+          let y = (top == '.') && (bottom == ' ') ? i - 1 :
+            ((top == ' ') && (bottom == '.')) ? i + 2 : -1;
 
-          if (y == -1)
-          {
+          if (y == -1) {
             console.log("Parsing error!")
             return;
           }
 
-          if (((i == 0) || (i == aMap.length - 2)) && 
-              (portalId != "AA") && (portalId != "ZZ"))
+          if (((i == 0) || (i == aMap.length - 2)) &&
+            (portalId != "AA") && (portalId != "ZZ"))
             portalId = portalId + "1";
 
           portals[portalId] = { x: j, y: y };
         }
-      }    
+      }
     }
-    
+
   return portals;
 }
 
-function PrintHashMap(aPortals) 
-{
+function PrintHashMap(aPortals) {
   for (let p in aPortals)
     console.log(p + ": " + JSON.stringify(aPortals[p]));
 }
 
-function IsValidDirection(aMap, aDirection) 
-{
+function IsValidDirection(aMap, aDirection) {
   let x = aDirection.x;
   let y = aDirection.y;
   if ((y < 0) || (y >= aMap.length) ||
-      (x < 0) || (x >= aMap[y].length))
+    (x < 0) || (x >= aMap[y].length))
     return false;
 
   if (aMap[y][x] == '#' || aMap[y][x] == ' ')
@@ -115,64 +100,58 @@ function IsValidDirection(aMap, aDirection)
   return true;
 }
 
-function FindValidDirections(aMap, aPos) 
-{
+function FindValidDirections(aMap, aPos) {
   let x = aPos.x;
   let y = aPos.y;
 
-  let posTop = { x: x , y: y + 1};
-  let posBottom = { x: x , y: y - 1};
+  let posTop = { x: x, y: y + 1 };
+  let posBottom = { x: x, y: y - 1 };
   let posLeft = { x: x - 1, y: y };
   let posRight = { x: x + 1, y: y };
 
   let directions = [];
   if (IsValidDirection(aMap, posTop))
     directions.push(posTop);
-  
+
   if (IsValidDirection(aMap, posBottom))
     directions.push(posBottom);
-  
+
   if (IsValidDirection(aMap, posLeft))
     directions.push(posLeft);
-  
+
   if (IsValidDirection(aMap, posRight))
     directions.push(posRight);
 
   return directions;
 }
 
-function GetCost(aCostMap, aPos) 
-{
-  if ((aCostMap[aPos.y] == undefined) || 
-      (aCostMap[aPos.y][aPos.x] == undefined))
+function GetCost(aCostMap, aPos) {
+  if ((aCostMap[aPos.y] == undefined) ||
+    (aCostMap[aPos.y][aPos.x] == undefined))
     return -1;
   return aCostMap[aPos.y][aPos.x];
 }
 
-function SetCost(aCostMap, aPos, aCost) 
-{
+function SetCost(aCostMap, aPos, aCost) {
   if (aCostMap[aPos.y] == undefined)
     aCostMap[aPos.y] = [];
   aCostMap[aPos.y][aPos.x] = aCost;
 }
 
-function ComputeLee(aMap, aStart) 
-{
+function ComputeLee(aMap, aStart) {
   let costMap = [];
   let stack = [aStart];
 
   SetCost(costMap, aStart, 0);
-  
+
   let pos;
-  while (stack.length > 0)
-  {
+  while (stack.length > 0) {
     pos = stack.pop();
 
     let cost = GetCost(costMap, pos);
 
     let directions = FindValidDirections(aMap, pos);
-    for (let i = 0; i < directions.length; i++) 
-    {
+    for (let i = 0; i < directions.length; i++) {
       if (GetCost(costMap, directions[i]) >= 0)
         continue;
 
@@ -184,24 +163,37 @@ function ComputeLee(aMap, aStart)
   return costMap;
 }
 
-function ComputeCostMap(aMap, aPortals, aMergePortals) 
-{
+function GetOppositePortal(aPortal) {
+  if (aPortal == "AA" || aPortal == "ZZ")
+    return aPortal;
+
+  if (aPortal.endsWith("1"))
+    return aPortal.substr(0, aPortal.length - 1);
+  else
+    return aPortal + "1";
+}
+
+function ComputeCostMap(aMap, aPortals, aMergePortals) {
   let portalDeps = [];
-  for (let portal in aPortals)
-  {
+  for (let portal in aPortals) {
     let costMap = ComputeLee(aMap, aPortals[portal]);
-    
+
     let deps = [];
-    for (let target in aPortals)
-    {
+
+    if (!aMergePortals) {
+      if (portal != "AA" && portal != "ZZ")
+        deps.push({ id: GetOppositePortal(portal), cost: 1 });
+    }
+
+    for (let target in aPortals) {
       if (portal == target)
         continue;
 
-      let targetPos = aPortals[target]; 
+      let targetPos = aPortals[target];
 
       let cost = GetCost(costMap, targetPos);
 
-      if (cost > -1) 
+      if (cost > -1)
         deps.push({ id: target, cost: cost });
     }
 
@@ -211,23 +203,18 @@ function ComputeCostMap(aMap, aPortals, aMergePortals)
   if (!aMergePortals)
     return portalDeps;
 
-  for (let pp in portalDeps)
-  {
-    if (pp.endsWith("1"))
-    {
+  for (let pp in portalDeps) {
+    if (pp.endsWith("1")) {
       let portal = pp.substr(0, pp.length - 1);
-      for (let i = 0; i < portalDeps[pp].length; i++) 
-      {
+      for (let i = 0; i < portalDeps[pp].length; i++) {
         if (portalDeps[pp][i].id.endsWith("1"))
           portalDeps[pp][i].id = portalDeps[pp][i].id.substr(0, portalDeps[pp][i].id.length - 1);
         portalDeps[portal].push(portalDeps[pp][i]);
       }
-      delete portalDeps[pp];            
+      delete portalDeps[pp];
     }
-    else
-    {
-      for (let i = 0; i < portalDeps[pp].length; i++) 
-      {
+    else {
+      for (let i = 0; i < portalDeps[pp].length; i++) {
         if (portalDeps[pp][i].id.endsWith("1"))
           portalDeps[pp][i].id = portalDeps[pp][i].id.substr(0, portalDeps[pp][i].id.length - 1);
       }
@@ -236,20 +223,15 @@ function ComputeCostMap(aMap, aPortals, aMergePortals)
   return portalDeps;
 }
 
-function GetInnerPortals(aCostMap) 
-{
+function GetInnerPortals(aCostMap) {
   let innerPortals = [];
-  for (let portal in aCostMap)
-  {
-    if (portal.endsWith("1") ||
-        (portal == "ZZ"))
+  for (let portal in aCostMap) {
+    if (portal.endsWith("1"))
       continue;
-    
+
     let dists = [];
-    for (let i = 0; i < aCostMap[portal].length; i++) 
-    {
-      if (aCostMap[portal][i].id.endsWith("1") || 
-         (aCostMap[portal][i].id == "ZZ"))
+    for (let i = 0; i < aCostMap[portal].length; i++) {
+      if (aCostMap[portal][i].id.endsWith("1"))
         continue;
 
       dists.push(aCostMap[portal][i]);
@@ -258,36 +240,67 @@ function GetInnerPortals(aCostMap)
     if (dists.length > 0)
       innerPortals[portal] = dists;
   }
-  
+
   return innerPortals;
 }
 
-function CreateDistMap(aCostMap) 
-{
+function GetOuterPortals(aCostMap) {
+  let outerPortals = [];
+  for (let portal in aCostMap) {
+    if (portal == "AA" || portal == "ZZ")
+      continue;
+
+    let dists = [];
+    for (let i = 0; i < aCostMap[portal].length; i++) {
+      if ((aCostMap[portal][i].id == "AA") ||
+        (aCostMap[portal][i].id == "ZZ"))
+        continue;
+
+      dists.push(aCostMap[portal][i]);
+    }
+
+    if (dists.length > 0)
+      outerPortals[portal] = dists;
+  }
+
+  return outerPortals;
+}
+
+function CreateDistMap(aCostMap) {
   let distMap = [];
-  for (let portal in aCostMap)
-  {
-    distMap[portal] = { visited: false, dist: Number.MAX_SAFE_INTEGER };
+  for (let portal in aCostMap) {
+    distMap[portal] = [];//{ visited: false, dist: Number.MAX_SAFE_INTEGER };
   }
 
   return distMap;
 }
 
-function SortByDist(aDistMap, aElem1, aElem2) 
-{
+function SortByDist(aDistMap, aElem1, aElem2) {
   let dist1 = aDistMap[aElem1].dist;
   let dist2 = aDistMap[aElem2].dist;
 
-  if (dist1 < dist2)
+  if (dist1.level < dist2.level)
     return -1;
-  else if (dist1 > dist2)
+  else if (dist1.level > dist2.level)
     return 1;
-  else 
-    return 0;
+  else {
+    if (dist1 < dist2)
+      return -1;
+    else if (dist1 > dist2)
+      return 1;
+    else
+      return 0;
+  }
 }
 
-function FindShortestPath(aCostMap, aStart, aEnd) 
-{
+function FindPortal(aPortals, aPortalId, aLevel) {
+  for (let i = 0; i < aPortals.length; i++)
+    if ((aPortals[i].id == aPortalId) && (aPortals[i].level == level))
+      return true;
+  return false;
+}
+
+function FindShortestPath(aCostMap, aStart, aEnd) {
   let queue = [aStart];
 
   let distMap = CreateDistMap(aCostMap);
@@ -296,33 +309,33 @@ function FindShortestPath(aCostMap, aStart, aEnd)
   let path = [];
 
   let foundEnd = false;
-  while (queue.length > 0) 
-  {
+  let lastNode;
+  while (queue.length > 0) {
     let currentNode = queue.shift();
-    let currentDist = distMap[currentNode].dist;
+    let currentDist = distMap[currentNode.id][currentNode.level].dist;
 
-    if (currentNode == aEnd)
-    {
+    if (currentNode.id == aEnd) {
       foundEnd = true;
       break;
     }
 
-    let neighbours = aCostMap[currentNode];    
+    let neighbours = GetNeighbours(currentNode.id);
 
-    for (let i = 0; i < neighbours.length; i++)
-    {
+    for (let i = 0; i < neighbours.length; i++) {
       let neighbour = neighbours[i];
 
       if (distMap[neighbour.id].visited)
         continue;
 
       let estimateDist = currentDist + neighbour.cost;
-      if (estimateDist < distMap[neighbour.id].dist) 
-      {
+      if (estimateDist < distMap[neighbour.id].dist) {
         path[neighbour.id] = currentNode;
+        lastNode = neighbour.id;
         distMap[neighbour.id].dist = estimateDist;
       }
-      queue.push(neighbour.id);
+
+      if (!FindPortal(queue, neighbour.id))
+        queue.push(neighbour.id);
     }
 
     distMap[currentNode].visited = true;
@@ -330,73 +343,130 @@ function FindShortestPath(aCostMap, aStart, aEnd)
   }
 
   if (!foundEnd)
-    return Number.MAX_SAFE_INTEGER;
+    return { endNode: lastNode, dist: distMap[lastNode].dist };
 
   let portalsPath = [];
   let next = aEnd;
-  while(1)
-  {
+  while (1) {
     portalsPath.unshift(next);
 
     if (next == aStart)
       break;
     next = path[next];
   }
-  
+
   console.log(portalsPath);
 
-  return distMap[aEnd].dist + portalsPath.length - 2;
+  return { endNode: aEnd, dist: (distMap[aEnd].dist + portalsPath.length - 2) };
 }
 
-function FindShortestPath2(aCostMap, aStart, aEnd) 
-{
+function FindShortestPath2(aCostMap, aStart, aEnd) {
   let innerPortals = GetInnerPortals(aCostMap);
+  let outerPortals = GetOuterPortals(aCostMap);
   let start = aStart;
-  let minDistNode = aStart; 
-  delete aCostMap["AA"];
-  delete aCostMap["ZZ"];
 
   let level = 0;
   let totalDist = 0;
-  while (true) 
-  {
-    let minDist = Number.MAX_SAFE_INTEGER;
-    let costMap = (level == 0) ? innerPortals : aCostMap;
-    for (let node in costMap)
-    {
-      if (node == start)
-        continue;
+  while (true) {
+    let costMap = (level == 0) ? innerPortals : outerPortals;
+    let ret = FindShortestPath(costMap, start, aEnd);
+    let endNode = ret.endNode;
 
-      let dist = FindShortestPath(costMap, start, node);
-      if (dist < minDist) 
-      {
-        minDist = dist;
-        minDistNode = node;
-      }
-    }
+    console.log(start + "-->" + endNode + " " + ret.dist + " " + level);
 
-    console.log(minDistNode + " " + minDist + " " + level);
+    totalDist += ret.dist;
 
-    totalDist += minDist;
-
-    if (minDistNode.endsWith(1))
-    {
-      level --;
-      if (minDistNode.endsWith("1") && (minDistNode != "ZZ")) 
-        start = minDistNode.substr(0, minDistNode.length - 1);
-    }
-    else
-    {
-      level ++;
-      if (!minDistNode.endsWith("1") && (minDistNode != "ZZ")) 
-        start = minDistNode + "1";
-    }
-
-    if ((level == 0) && (minDistNode == aEnd))
+    if ((level == 0) && (endNode == aEnd))
       break;
+
+    if (endNode.endsWith(1)) {
+      level--;
+      if (endNode.endsWith("1"))
+        start = endNode.substr(0, endNode.length - 1);
+    }
+    else {
+      level++;
+      if (!endNode.endsWith("1"))
+        start = endNode + "1";
+    }
   }
 
   return totalDist;
+}
+
+function GetNeighbours(aLevel, aInnerPortals, aOuterPortals, aPortal) {
+  let costMap = (aLevel == 0) ? aInnerPortals : aOuterPortals;
+
+  return costMap[aPortal];
+}
+
+function IsSame(aPortal1, aPortal2) {
+  return aPortal1.substr(0, 2) == aPortal2.substr(0, 2);
+}
+
+function FindShortestPath3(aCostMap, aStart, aEnd) {
+  let innerPortals = GetInnerPortals(aCostMap);
+  let outerPortals = GetOuterPortals(aCostMap);
+  let queue = [aStart];
+
+  let distMap = CreateDistMap(aCostMap);
+  distMap[aStart].dist = 0;
+
+  let path = [];
+
+  let foundEnd = false;
+  while (queue.length > 0) {
+    let currentNode = queue.shift();
+
+    let currentDist = distMap[currentNode].dist;
+
+    if ((currentNode.id == aEnd) && (currentNode.level == 0)) {
+      foundEnd = true;
+      break;
+    }
+
+    let neighbours = GetNeighbours(currentNode.level,
+      innerPortals, outerPortals, currentNode.id);
+
+    for (let i = 0; i < neighbours.length; i++) {
+      let neighbour = neighbours[i];
+
+      let level = currentNode.level;
+      if (neighbour.id.endsWith("1"))
+        level--;
+      else
+        level++;
+
+      if (distMap[neighbour.id][level].visited)
+        continue;
+
+      let estimateDist = currentDist + neighbour.cost;
+      if (estimateDist < distMap[neighbour.id].dist) {
+        path[neighbour.id] = currentNode;
+        distMap[neighbour.id][level].dist = estimateDist;
+      }
+
+      if (!FindPortal(queue, neighbour.id, level))
+        queue.push({ id: neighbour.id, level: level });
+    }
+
+    distMap[currentNode][currentNode.level].visited = true;
+    queue.sort(SortByDist.bind(null, distMap));
+  }
+
+  let portalsPath = [];
+  let next = aEnd;
+  while (1) {
+    portalsPath.unshift(next);
+
+    if (next == aStart)
+      break;
+    next = path[next];
+  }
+
+  console.log(portalsPath);
+
+  return { endNode: aEnd, dist: (distMap[aEnd].dist + portalsPath.length - 2) };
 }
 
 var map = util.MapInput("./Day20TestInput3.txt", ParseMap, "\r\n");
@@ -411,13 +481,13 @@ var costMap = ComputeCostMap(map, portals, true);
 
 PrintHashMap(costMap);
 
-let dist = FindShortestPath(costMap, "AA", "ZZ");
-console.log(dist);
+let ret = FindShortestPath(costMap, "AA", "ZZ");
+console.log(ret.dist);
 
 let fullCostMap = ComputeCostMap(map, portals, false);
 
 PrintHashMap(fullCostMap);
 
-let total = FindShortestPath2(fullCostMap, "AA", "ZZ");
+let total = FindShortestPath3(fullCostMap, "AA", "ZZ");
 
 console.log(total);

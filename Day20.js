@@ -1,4 +1,5 @@
 const util = require('./Util.js');
+const alg = require('./Dijkstra.js');
 
 function ParseLine(aElem) {
   return aElem.split("");
@@ -223,6 +224,97 @@ function ComputeCostMap(aMap, aPortals, aMergePortals) {
   return portalDeps;
 }
 
+function CreateDistMap(aCostMap) {
+  let distMap = [];
+  for (let portal in aCostMap) {
+    distMap[portal] = { visited: false, dist: Number.MAX_SAFE_INTEGER };
+  }
+
+  return distMap;
+}
+
+function SortByDist(aDistMap, aElem1, aElem2) {
+  let dist1 = aDistMap[aElem1].dist;
+  let dist2 = aDistMap[aElem2].dist;
+
+  if (dist1 < dist2)
+    return -1;
+  else if (dist1 > dist2)
+    return 1;
+  else
+    return 0;
+}
+
+function FindElem(aElements, aElem) {
+  for (let i = 0; i < aElements.length; i++)
+    if (JSON.stringify(aElements[i]) == JSON.stringify(aElem))
+      return true;
+  return false;
+}
+
+function FindShortestPath(aCostMap, aStart, aEnd) {
+  let queue = [aStart];
+
+  let distMap = CreateDistMap(aCostMap);
+  distMap[aStart].dist = 0;
+
+  let path = [];
+  while (queue.length > 0) {
+    let currentNode = queue.shift();
+    let currentDist = distMap[currentNode].dist;
+
+    if (currentNode == aEnd) {
+      foundEnd = true;
+      break;
+    }
+
+    let neighbours = aCostMap[currentNode];
+
+    for (let i = 0; i < neighbours.length; i++) {
+      let neighbour = neighbours[i];
+
+      if (distMap[neighbour.id].visited)
+        continue;
+
+      let estimateDist = currentDist + neighbour.cost;
+      if (estimateDist < distMap[neighbour.id].dist) {
+        path[neighbour.id] = currentNode;
+        distMap[neighbour.id].dist = estimateDist;
+      }
+
+      if (!FindElem(queue, neighbour.id))
+        queue.push(neighbour.id);
+    }
+
+    distMap[currentNode].visited = true;
+    queue.sort(SortByDist.bind(null, distMap));
+  }
+
+  let portalsPath = [];
+  let next = aEnd;
+  while (1) {
+    portalsPath.unshift(next);
+
+    if (next == aStart)
+      break;
+    next = path[next];
+  }
+
+  console.log(portalsPath);
+
+  return distMap[aEnd].dist + portalsPath.length - 2;
+}
+
+function GetNeighbours(aLevel, aInnerPortals, aOuterPortals, aPortal) {
+  let costMap = (aLevel == 0) ? aInnerPortals : aOuterPortals;
+
+  return costMap[aPortal];
+}
+
+function IsSame(aPortal1, aPortal2) {
+  return aPortal1.substr(0, 2) == aPortal2.substr(0, 2);
+}
+
 function GetInnerPortals(aCostMap) {
   let innerPortals = [];
   for (let portal in aCostMap) {
@@ -247,13 +339,12 @@ function GetInnerPortals(aCostMap) {
 function GetOuterPortals(aCostMap) {
   let outerPortals = [];
   for (let portal in aCostMap) {
-    if (portal == "AA" || portal == "ZZ")
+    if (portal == "AA")
       continue;
 
     let dists = [];
     for (let i = 0; i < aCostMap[portal].length; i++) {
-      if ((aCostMap[portal][i].id == "AA") ||
-        (aCostMap[portal][i].id == "ZZ"))
+      if (aCostMap[portal][i].id == "AA")
         continue;
 
       dists.push(aCostMap[portal][i]);
@@ -266,192 +357,120 @@ function GetOuterPortals(aCostMap) {
   return outerPortals;
 }
 
-function CreateDistMap(aCostMap) {
-  let distMap = [];
-  for (let portal in aCostMap) {
-    distMap[portal] = [];//{ visited: false, dist: Number.MAX_SAFE_INTEGER };
-  }
+function IsVisited(aDistMap, aNode, aLevel) {
+  if (aDistMap[aNode] == undefined)
+    return false;
+ 
+  if (aDistMap[aNode][aLevel] == undefined)
+    return false;
 
-  return distMap;
+  return aDistMap[aNode][aLevel].visited;
 }
 
-function SortByDist(aDistMap, aElem1, aElem2) {
-  let dist1 = aDistMap[aElem1].dist;
-  let dist2 = aDistMap[aElem2].dist;
+function SetVisited(aDistMap, aNode, aLevel) {
+  if (aDistMap[aNode] == undefined)
+    aDistMap[aNode] = [];
 
-  if (dist1.level < dist2.level)
+  if (aDistMap[aNode][aLevel] == undefined)
+    aDistMap[aNode][aLevel] = { visited: true, dist: Number.MAX_SAFE_INTEGER };
+  else
+    aDistMap[aNode][aLevel].visited = true;
+}
+
+function GetDist(aDistMap, aNode, aLevel) 
+{
+  if (aDistMap[aNode] == undefined)
+    return Number.MAX_SAFE_INTEGER;
+ 
+  if (aDistMap[aNode][aLevel] == undefined)
+    return Number.MAX_SAFE_INTEGER;
+
+  return aDistMap[aNode][aLevel].dist;
+}
+
+function SetDist(aDistMap, aNode, aLevel, aDist) {
+  if (aDistMap[aNode] == undefined)
+    aDistMap[aNode] = [];
+
+  if (aDistMap[aNode][aLevel] == undefined)
+    aDistMap[aNode][aLevel] = { visited: false, dist: aDist };
+  else
+    aDistMap[aNode][aLevel].dist = aDist;
+}
+
+function SortByDistAndLevel(aDistMap, aElem1, aElem2) {
+  let dist1 = GetDist(aDistMap, aElem1.id, aElem1.level);
+  let dist2 = GetDist(aDistMap, aElem2.id, aElem2.level);
+
+  if (dist1 < dist2)
     return -1;
-  else if (dist1.level > dist2.level)
+  else if (dist1 > dist2)
     return 1;
-  else {
-    if (dist1 < dist2)
-      return -1;
-    else if (dist1 > dist2)
-      return 1;
-    else
-      return 0;
-  }
-}
-
-function FindPortal(aPortals, aPortalId, aLevel) {
-  for (let i = 0; i < aPortals.length; i++)
-    if ((aPortals[i].id == aPortalId) && (aPortals[i].level == level))
-      return true;
-  return false;
-}
-
-function FindShortestPath(aCostMap, aStart, aEnd) {
-  let queue = [aStart];
-
-  let distMap = CreateDistMap(aCostMap);
-  distMap[aStart].dist = 0;
-
-  let path = [];
-
-  let foundEnd = false;
-  let lastNode;
-  while (queue.length > 0) {
-    let currentNode = queue.shift();
-    let currentDist = distMap[currentNode.id][currentNode.level].dist;
-
-    if (currentNode.id == aEnd) {
-      foundEnd = true;
-      break;
-    }
-
-    let neighbours = GetNeighbours(currentNode.id);
-
-    for (let i = 0; i < neighbours.length; i++) {
-      let neighbour = neighbours[i];
-
-      if (distMap[neighbour.id].visited)
-        continue;
-
-      let estimateDist = currentDist + neighbour.cost;
-      if (estimateDist < distMap[neighbour.id].dist) {
-        path[neighbour.id] = currentNode;
-        lastNode = neighbour.id;
-        distMap[neighbour.id].dist = estimateDist;
-      }
-
-      if (!FindPortal(queue, neighbour.id))
-        queue.push(neighbour.id);
-    }
-
-    distMap[currentNode].visited = true;
-    queue.sort(SortByDist.bind(null, distMap));
-  }
-
-  if (!foundEnd)
-    return { endNode: lastNode, dist: distMap[lastNode].dist };
-
-  let portalsPath = [];
-  let next = aEnd;
-  while (1) {
-    portalsPath.unshift(next);
-
-    if (next == aStart)
-      break;
-    next = path[next];
-  }
-
-  console.log(portalsPath);
-
-  return { endNode: aEnd, dist: (distMap[aEnd].dist + portalsPath.length - 2) };
-}
-
-function FindShortestPath2(aCostMap, aStart, aEnd) {
-  let innerPortals = GetInnerPortals(aCostMap);
-  let outerPortals = GetOuterPortals(aCostMap);
-  let start = aStart;
-
-  let level = 0;
-  let totalDist = 0;
-  while (true) {
-    let costMap = (level == 0) ? innerPortals : outerPortals;
-    let ret = FindShortestPath(costMap, start, aEnd);
-    let endNode = ret.endNode;
-
-    console.log(start + "-->" + endNode + " " + ret.dist + " " + level);
-
-    totalDist += ret.dist;
-
-    if ((level == 0) && (endNode == aEnd))
-      break;
-
-    if (endNode.endsWith(1)) {
-      level--;
-      if (endNode.endsWith("1"))
-        start = endNode.substr(0, endNode.length - 1);
-    }
-    else {
-      level++;
-      if (!endNode.endsWith("1"))
-        start = endNode + "1";
-    }
-  }
-
-  return totalDist;
-}
-
-function GetNeighbours(aLevel, aInnerPortals, aOuterPortals, aPortal) {
-  let costMap = (aLevel == 0) ? aInnerPortals : aOuterPortals;
-
-  return costMap[aPortal];
-}
-
-function IsSame(aPortal1, aPortal2) {
-  return aPortal1.substr(0, 2) == aPortal2.substr(0, 2);
+  else
+    return 0;
 }
 
 function FindShortestPath3(aCostMap, aStart, aEnd) {
-  let innerPortals = GetInnerPortals(aCostMap);
-  let outerPortals = GetOuterPortals(aCostMap);
-  let queue = [aStart];
+  //let innerPortals = GetInnerPortals(aCostMap);
+  //let outerPortals = GetOuterPortals(aCostMap);
+  let queue = [{ id: aStart, level: 0 }];
 
-  let distMap = CreateDistMap(aCostMap);
-  distMap[aStart].dist = 0;
+  let distMap = [];
+  SetDist(distMap, aStart, 0, 0);
 
   let path = [];
-
-  let foundEnd = false;
   while (queue.length > 0) {
     let currentNode = queue.shift();
 
-    let currentDist = distMap[currentNode].dist;
+    let currentDist = GetDist(distMap, currentNode.id, currentNode.level);
 
-    if ((currentNode.id == aEnd) && (currentNode.level == 0)) {
-      foundEnd = true;
+    if ((currentNode.id == aEnd) && (currentNode.level == 0))
       break;
-    }
 
-    let neighbours = GetNeighbours(currentNode.level,
-      innerPortals, outerPortals, currentNode.id);
+    let neighbours = aCostMap[currentNode.id];
+
+    if (neighbours == undefined)
+      continue;
 
     for (let i = 0; i < neighbours.length; i++) {
       let neighbour = neighbours[i];
 
-      let level = currentNode.level;
-      if (neighbour.id.endsWith("1"))
-        level--;
-      else
-        level++;
+      if (((neighbour.id == "ZZ") && (currentNode.level > 0)) || 
+           (neighbour.id == "AA") || 
+           (neighbour.id.endsWith("1") && !IsSame(neighbour.id, currentNode.id) && (currentNode.level == 0)))
+        continue;
 
-      if (distMap[neighbour.id][level].visited)
+      let level = currentNode.level;
+      if (IsSame(neighbour.id, currentNode.id)) 
+      {
+        if (currentNode.id.endsWith("1")) 
+        {
+          if (level == 0)
+            continue;
+          level--;
+        }
+        else
+          level++;
+      }
+
+      if (IsVisited(distMap, neighbour.id, level))
         continue;
 
       let estimateDist = currentDist + neighbour.cost;
-      if (estimateDist < distMap[neighbour.id].dist) {
-        path[neighbour.id] = currentNode;
-        distMap[neighbour.id][level].dist = estimateDist;
+      if (estimateDist < GetDist(distMap, neighbour.id, level)) {
+        path[neighbour.id] = currentNode.id;
+        console.log(currentNode.id + " " + currentNode.level + "-->" + neighbour.id);
+        SetDist(distMap, neighbour.id, level, estimateDist);
       }
 
-      if (!FindPortal(queue, neighbour.id, level))
-        queue.push({ id: neighbour.id, level: level });
+      let newNode = { id: neighbour.id, level: level };
+
+      if (!FindElem(queue, newNode))
+        queue.push(newNode);
     }
 
-    distMap[currentNode][currentNode.level].visited = true;
-    queue.sort(SortByDist.bind(null, distMap));
+    SetVisited(distMap, currentNode.id, currentNode.level);
+    queue.sort(SortByDistAndLevel.bind(null, distMap));
   }
 
   let portalsPath = [];
@@ -466,7 +485,7 @@ function FindShortestPath3(aCostMap, aStart, aEnd) {
 
   console.log(portalsPath);
 
-  return { endNode: aEnd, dist: (distMap[aEnd].dist + portalsPath.length - 2) };
+  return GetDist(distMap, aEnd, 0);
 }
 
 var map = util.MapInput("./Day20TestInput3.txt", ParseMap, "\r\n");
@@ -477,17 +496,17 @@ var portals = FindPortals(map);
 
 PrintHashMap(portals);
 
-var costMap = ComputeCostMap(map, portals, true);
+//var costMap = ComputeCostMap(map, portals, true);
 
-PrintHashMap(costMap);
+//PrintHashMap(costMap);
 
-let ret = FindShortestPath(costMap, "AA", "ZZ");
-console.log(ret.dist);
+//let minDist = FindShortestPath(costMap, "AA", "ZZ");
+//console.log(minDist);
 
 let fullCostMap = ComputeCostMap(map, portals, false);
 
 PrintHashMap(fullCostMap);
 
-let total = FindShortestPath3(fullCostMap, "AA", "ZZ");
+let minDist = FindShortestPath3(fullCostMap, "AA", "ZZ");
 
-console.log(total);
+console.log(minDist);

@@ -110,9 +110,9 @@ class RemoteControl {
         this.mDir = DIR_EAST;
       else
         console.log("Invalid position!");
-
-      this.PrintMap({x: this.mX, y: this.mY});
     }
+
+    this.PrintMap({x: this.mX, y: this.mY});
   }
 
   GetNext(aX, aY, aDir) 

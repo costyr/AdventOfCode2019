@@ -9,6 +9,7 @@ const ID_OXYGEN_SYSTEM = 2;
 const EMPTY = 0;
 const WALL = 1;
 const NOT_VISITED = 4;
+const NO_PATH = 5;
 
 const DIR_NORTH = 1;
 const DIR_SOUTH = 2;
@@ -84,19 +85,21 @@ class RemoteControl {
     let dirs = [posNorth, posSouth, posWest, posEast];
     let validDirs = 0;
     for (let i = 0; i < dirs.length; i++)
-      if (dirs[i] == EMPTY || dirs[i] == NOT_VISITED)
+      if (this.IsValidDir(dirs[i]))
         validDirs ++;
     
     if (validDirs <= 1)
     {
-      if (this.mDir == DIR_NORTH)
-        this.mDir = DIR_SOUTH;
-      else if (this.mDir == DIR_SOUTH)
+      this.AddToMap(this.mX, this.mY, NO_PATH);
+
+      if (this.IsValidDir(posNorth))
         this.mDir = DIR_NORTH;
-      else if (this.mDir == DIR_WEST)
-        this.mDir = DIR_EAST;
-      else
+      else if (this.IsValidDir(posSouth))
+        this.mDir = DIR_SOUTH;
+      else if (this.IsValidDir(posWest))
         this.mDir = DIR_WEST;
+      else
+        this.mDir = DIR_EAST;
     }
     else 
     {
@@ -108,11 +111,31 @@ class RemoteControl {
         this.mDir = DIR_WEST;
       else if (posEast == NOT_VISITED)
         this.mDir = DIR_EAST;
+      /*else if (posNorth == EMPTY)
+        this.mDir = DIR_NORTH;
+      else if (posSouth == EMPTY)
+        this.mDir = DIR_SOUTH;
+      else if (posWest == EMPTY)
+        this.mDir = DIR_WEST;
+      else if (posEast == EMPTY)
+        this.mDir = DIR_EAST;
+      /*else if (posNorth == ID_OXYGEN_SYSTEM)
+        this.mDir = DIR_NORTH;
+      else if (posSouth == ID_OXYGEN_SYSTEM)
+        this.mDir = DIR_SOUTH;
+      else if (posWest == ID_OXYGEN_SYSTEM)
+        this.mDir = DIR_WEST;
+      else if (posEast == ID_OXYGEN_SYSTEM)
+        this.mDir = DIR_EAST;*/
       else
         console.log("Invalid position!");
     }
 
     this.PrintMap({x: this.mX, y: this.mY});
+  }
+
+  IsValidDir(aDir) {
+    return (aDir == EMPTY) || (aDir == NOT_VISITED) || (aDir == ID_OXYGEN_SYSTEM);
   }
 
   GetNext(aX, aY, aDir) 
@@ -185,6 +208,8 @@ class RemoteControl {
 
     let posX = aPos.x + Math.abs(minMax.min.x);
     let posY = aPos.y + Math.abs(minMax.min.y);
+
+    console.log(posX + " " + posY);
 
     for (let i = 0; i < this.mMap.length; i++) 
     {

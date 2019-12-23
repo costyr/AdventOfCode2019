@@ -61,6 +61,7 @@ const ERROR_INPUT_NEEDED = 1;
 const ERROR_PROGRAM_HALTED = 2;
 const ERROR_INVALID_INSTURCTION = 3;
 const ERROR_PROGRAM_STOPPED = 4;
+const ERROR_BREACK_OCCURED = 5;
 
 class IntcodeProgram {
 
@@ -71,6 +72,12 @@ class IntcodeProgram {
     this.mInstPos = 0;
     this.mErrorCode = 0;
     this.mRelativeBase = 0;
+    this.mBreakInterval = 0;
+  }
+
+  SetBreakInterval(aInterval) 
+  {
+    this.mBreakInterval = aInterval;
   }
 
   GetValueAtMemPos(aPos) 
@@ -144,13 +151,27 @@ class IntcodeProgram {
 
   Run() {
 
-    if ((this.mErrorCode == ERROR_INPUT_NEEDED) && !this.mInputStream.IsEndOfStream())
+    if (((this.mErrorCode == ERROR_INPUT_NEEDED) && !this.mInputStream.IsEndOfStream()) || 
+        (this.mErrorCode == ERROR_BREACK_OCCURED))
       this.mErrorCode = NO_ERROR;
 
     if (this.mErrorCode != NO_ERROR)
       return this.mErrorCode;
 
-    for (let i = this.mInstPos; i < this.mInst.length;) {
+    let instructionCouter = 0;
+    for (let i = this.mInstPos; i < this.mInst.length;) 
+    {
+      if (this.mBreakInterval > 0)
+      {
+        if ((instructionCouter > this.mBreakInterval)) 
+        {
+          this.mInstPos = i;
+          this.mErrorCode = ERROR_BREACK_OCCURED;
+          return;
+        } 
+        else
+          instructionCouter ++;
+      }
 
       let detail = SplitInstruction(this.mInst[i]);
 

@@ -305,56 +305,12 @@ function FindShortestPath(aCostMap, aStart, aEnd) {
   return distMap[aEnd].dist + portalsPath.length - 2;
 }
 
-function GetNeighbours(aLevel, aInnerPortals, aOuterPortals, aPortal) {
-  let costMap = (aLevel == 0) ? aInnerPortals : aOuterPortals;
-
-  return costMap[aPortal];
-}
-
 function IsSame(aPortal1, aPortal2) {
   return aPortal1.substr(0, 2) == aPortal2.substr(0, 2);
 }
 
-function GetInnerPortals(aCostMap) {
-  let innerPortals = [];
-  for (let portal in aCostMap) {
-    if (portal.endsWith("1"))
-      continue;
-
-    let dists = [];
-    for (let i = 0; i < aCostMap[portal].length; i++) {
-      if (aCostMap[portal][i].id.endsWith("1"))
-        continue;
-
-      dists.push(aCostMap[portal][i]);
-    }
-
-    if (dists.length > 0)
-      innerPortals[portal] = dists;
-  }
-
-  return innerPortals;
-}
-
-function GetOuterPortals(aCostMap) {
-  let outerPortals = [];
-  for (let portal in aCostMap) {
-    if (portal == "AA")
-      continue;
-
-    let dists = [];
-    for (let i = 0; i < aCostMap[portal].length; i++) {
-      if (aCostMap[portal][i].id == "AA")
-        continue;
-
-      dists.push(aCostMap[portal][i]);
-    }
-
-    if (dists.length > 0)
-      outerPortals[portal] = dists;
-  }
-
-  return outerPortals;
+function IsOuter(aPortal) {
+  return aPortal.endsWith("1");
 }
 
 function IsVisited(aDistMap, aNode, aLevel) {
@@ -411,8 +367,6 @@ function SortByDistAndLevel(aDistMap, aElem1, aElem2) {
 }
 
 function FindShortestPath3(aCostMap, aStart, aEnd) {
-  //let innerPortals = GetInnerPortals(aCostMap);
-  //let outerPortals = GetOuterPortals(aCostMap);
   let queue = [{ id: aStart, level: 0 }];
 
   let distMap = [];
@@ -429,24 +383,18 @@ function FindShortestPath3(aCostMap, aStart, aEnd) {
 
     let neighbours = aCostMap[currentNode.id];
 
-    if (neighbours == undefined)
-      continue;
-
     for (let i = 0; i < neighbours.length; i++) {
       let neighbour = neighbours[i];
 
-      if (((neighbour.id == "ZZ") && (currentNode.level > 0)) || 
-           (neighbour.id == "AA") || 
-           (neighbour.id.endsWith("1") && !IsSame(neighbour.id, currentNode.id) && (currentNode.level == 0)))
+     if (((neighbour.id == "ZZ") && (currentNode.level > 0)) || 
+           (IsOuter(neighbour.id) && !IsSame(currentNode.id, neighbour.id) && (currentNode.level == 0)))
         continue;
 
       let level = currentNode.level;
-      if (IsSame(neighbour.id, currentNode.id)) 
+      if (IsSame(currentNode.id, neighbour.id)) 
       {
-        if (currentNode.id.endsWith("1")) 
+        if (IsOuter(currentNode.id) && !IsOuter(neighbour.id)) 
         {
-          if (level == 0)
-            continue;
           level--;
         }
         else
@@ -473,7 +421,7 @@ function FindShortestPath3(aCostMap, aStart, aEnd) {
     queue.sort(SortByDistAndLevel.bind(null, distMap));
   }
 
-  let portalsPath = [];
+  /*let portalsPath = [];
   let next = aEnd;
   while (1) {
     portalsPath.unshift(next);
@@ -483,12 +431,12 @@ function FindShortestPath3(aCostMap, aStart, aEnd) {
     next = path[next];
   }
 
-  console.log(portalsPath);
+  console.log(portalsPath);*/
 
   return GetDist(distMap, aEnd, 0);
 }
 
-var map = util.MapInput("./Day20TestInput3.txt", ParseMap, "\r\n");
+var map = util.MapInput("./Day20Input.txt", ParseMap, "\r\n");
 
 PrintMap(map);
 

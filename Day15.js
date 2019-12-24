@@ -23,6 +23,7 @@ class RemoteControl {
     this.mDir = DIR_NORTH;
     this.mPath = [];
     this.mMap = [];
+    this.mOxigenSystemPos = { x: 0, y: 0};
   }
 
   IsEndOfStream() {
@@ -36,7 +37,7 @@ class RemoteControl {
   }
 
   Write(aValue) {
-    if (aValue == ID_MOVED)
+    if ((aValue == ID_MOVED) || (aValue == ID_OXYGEN_SYSTEM))
     {
       if (this.mDir == DIR_NORTH)
         this.mY++;
@@ -47,12 +48,16 @@ class RemoteControl {
       else if (this.mDir == DIR_EAST)
         this.mX++;
       
-      this.AddToMap(this.mX, this.mY, EMPTY);
+      this.AddToMap(this.mX, this.mY, (aValue == ID_MOVED) ? EMPTY : ID_OXYGEN_SYSTEM );
+
+      if (aValue == ID_OXYGEN_SYSTEM) 
+      {
+        console.log("Oxygen system! " + this.mMap.length);
+        this.mOxigenSystemPos = { x: this.mX, y: this.mY };
+      }
     }
-    else if ((aValue == ID_WALL) || 
-             (aValue == ID_OXYGEN_SYSTEM))
+    else if (aValue == ID_WALL)
     {
-      let value = (aValue == ID_OXYGEN_SYSTEM) ? ID_OXYGEN_SYSTEM : WALL;
       let x = this.mX;
       let y = this.mY;
 
@@ -67,10 +72,7 @@ class RemoteControl {
       else
         console.log("Invalid direction!" + ID_WALL);
 
-      this.AddToMap(x, y, value);
-
-      if (aValue == ID_OXYGEN_SYSTEM)
-        console.log("Oxygen system! " + this.mMap.length);
+      this.AddToMap(x, y, WALL);
     }
     else
     {
@@ -111,7 +113,9 @@ class RemoteControl {
         this.mDir = DIR_WEST;
       else if (posEast == NOT_VISITED)
         this.mDir = DIR_EAST;
-      /*else if (posNorth == EMPTY)
+      else 
+      {
+      if (posNorth == EMPTY)
         this.mDir = DIR_NORTH;
       else if (posSouth == EMPTY)
         this.mDir = DIR_SOUTH;
@@ -119,23 +123,28 @@ class RemoteControl {
         this.mDir = DIR_WEST;
       else if (posEast == EMPTY)
         this.mDir = DIR_EAST;
-      /*else if (posNorth == ID_OXYGEN_SYSTEM)
+      else
+      {
+        if (posNorth == ID_OXYGEN_SYSTEM)
         this.mDir = DIR_NORTH;
       else if (posSouth == ID_OXYGEN_SYSTEM)
         this.mDir = DIR_SOUTH;
       else if (posWest == ID_OXYGEN_SYSTEM)
         this.mDir = DIR_WEST;
       else if (posEast == ID_OXYGEN_SYSTEM)
-        this.mDir = DIR_EAST;*/
-      else
-        console.log("Invalid position!");
+        this.mDir = DIR_EAST;
+      }
+      }
+      
+      //else
+      //  console.log("Invalid position!");
     }
 
     this.PrintMap({x: this.mX, y: this.mY});
   }
 
   IsValidDir(aDir) {
-    return (aDir == EMPTY) || (aDir == NOT_VISITED) || (aDir == ID_OXYGEN_SYSTEM);
+    return (aDir == EMPTY) || (aDir == ID_OXYGEN_SYSTEM) || (aDir == NOT_VISITED);
   }
 
   GetNext(aX, aY, aDir) 
@@ -170,6 +179,9 @@ class RemoteControl {
     let mapPos = this.FindMapPoint(aX, aY);
     if (mapPos)
     {
+      //if (mapPos.v == ID_OXYGEN_SYSTEM)
+      //  return;
+
       if (mapPos.v != aValue)
         mapPos.v = aValue;
     }
@@ -221,8 +233,8 @@ class RemoteControl {
       else if (this.mMap[i].v == ID_OXYGEN_SYSTEM)
         screen.SetValue(y, x, "o");
 
-      if (posX == x && posY == y)
-        screen.SetValue(y, x, "x");
+      //if (posX == x && posY == y)
+      //  screen.SetValue(y, x, "x");
     }
 
     screen.PrintReverse();

@@ -16,6 +16,82 @@ const DIR_SOUTH = 2;
 const DIR_WEST = 3;
 const DIR_EAST = 4;
 
+function IsValidDirection(aMap, aDirection) {
+  let x = aDirection.x;
+  let y = aDirection.y;
+  if ((y < 0) || (y >= aMap.length) ||
+    (x < 0) || (x >= aMap[y].length))
+    return false;
+
+  if (aMap[y][x] == '#' || aMap[y][x] == ' ')
+    return false;
+
+  return true;
+}
+
+function FindValidDirections(aMap, aPos) {
+  let x = aPos.x;
+  let y = aPos.y;
+
+  let posTop = { x: x, y: y + 1 };
+  let posBottom = { x: x, y: y - 1 };
+  let posLeft = { x: x - 1, y: y };
+  let posRight = { x: x + 1, y: y };
+
+  let directions = [];
+  if (IsValidDirection(aMap, posTop))
+    directions.push(posTop);
+
+  if (IsValidDirection(aMap, posBottom))
+    directions.push(posBottom);
+
+  if (IsValidDirection(aMap, posLeft))
+    directions.push(posLeft);
+
+  if (IsValidDirection(aMap, posRight))
+    directions.push(posRight);
+
+  return directions;
+}
+
+function GetCost(aCostMap, aPos) {
+  if ((aCostMap[aPos.y] == undefined) ||
+    (aCostMap[aPos.y][aPos.x] == undefined))
+    return -1;
+  return aCostMap[aPos.y][aPos.x];
+}
+
+function SetCost(aCostMap, aPos, aCost) {
+  if (aCostMap[aPos.y] == undefined)
+    aCostMap[aPos.y] = [];
+  aCostMap[aPos.y][aPos.x] = aCost;
+}
+
+function ComputeLee(aMap, aStart) {
+  let costMap = [];
+  let stack = [aStart];
+
+  SetCost(costMap, aStart, 0);
+
+  let pos;
+  while (stack.length > 0) {
+    pos = stack.pop();
+
+    let cost = GetCost(costMap, pos);
+
+    let directions = FindValidDirections(aMap, pos);
+    for (let i = 0; i < directions.length; i++) {
+      if (GetCost(costMap, directions[i]) >= 0)
+        continue;
+
+      SetCost(costMap, directions[i], cost + 1);
+      stack.push(directions[i]);
+    }
+  }
+
+  return costMap;
+}
+
 class RemoteControl {
   constructor() {
     this.mX = 0;
@@ -24,10 +100,12 @@ class RemoteControl {
     this.mPath = [];
     this.mMap = [];
     this.mOxigenSystemPos = { x: 0, y: 0};
+    this.mEndOfStream = false;
+    this.mMinMax = null;
   }
 
   IsEndOfStream() {
-    return false;
+    return this.mEndOfStream;
   }
 
   Read() {
@@ -90,6 +168,14 @@ class RemoteControl {
       if (this.IsValidDir(dirs[i]))
         validDirs ++;
     
+    if (validDirs == 0)
+    {
+      this.mEndOfStream = true;
+      this.AddToMap(this.mOxigenSystemPos.x, this.mOxigenSystemPos.y, ID_OXYGEN_SYSTEM );
+      this.mMinMax = this.GetMaxXY();
+      return;
+    }
+
     if (validDirs <= 1)
     {
       this.AddToMap(this.mX, this.mY, NO_PATH);
@@ -140,7 +226,7 @@ class RemoteControl {
       //  console.log("Invalid position!");
     }
 
-    this.PrintMap({x: this.mX, y: this.mY});
+    //this.PrintMap({x: this.mX, y: this.mY});
   }
 
   IsValidDir(aDir) {
@@ -211,17 +297,14 @@ class RemoteControl {
 
   PrintMap(aPos)
   {
-    let minMax = this.GetMaxXY();
+    let minMax = this.mMinMax;
 
     let width = Math.abs(minMax.min.x) + Math.abs(minMax.max.x) + 1;
     let height = Math.abs(minMax.min.y) + Math.abs(minMax.max.y) + 1;
 
     let screen = new matrix.Matrix(width, height, ".");
 
-    let posX = aPos.x + Math.abs(minMax.min.x);
-    let posY = aPos.y + Math.abs(minMax.min.y);
-
-    console.log(posX + " " + posY);
+    let pos = this.ConvertPosToMap(aPos);
 
     for (let i = 0; i < this.mMap.length; i++) 
     {
@@ -233,11 +316,40 @@ class RemoteControl {
       else if (this.mMap[i].v == ID_OXYGEN_SYSTEM)
         screen.SetValue(y, x, "o");
 
-      //if (posX == x && posY == y)
-      //  screen.SetValue(y, x, "x");
+      if (pos.x == x && pos.y == y)
+        screen.SetValue(y, x, "x");
     }
 
-    screen.PrintReverse();
+    return screen;
+  }
+
+  ConvertPosToMap(aPos) {
+    let x = aPos.x + Math.abs(this.mMinMax.min.x);
+    let y = aPos.y + Math.abs(this.mMinMax.min.y);
+
+    return { x: x, y: y };
+  }
+
+  ComputeMinDistToOxygenSystem() {
+    let map = this.PrintMap({ x: 0, y: 0 }).GetMatrix();
+
+    let start = this.ConvertPosToMap({ x: 0, y: 0 });
+
+    let oxygenSystem = this.ConvertPosToMap(this.mOxigenSystemPos);
+
+    let costMap = ComputeLee(map, start);
+
+    return costMap[oxygenSystem.y][oxygenSystem.x];
+  }
+
+  ComputeOxygenSpread() {
+    let map = this.PrintMap({ x: 0, y: 0 }).GetMatrix();
+
+    let oxygenSystem = this.ConvertPosToMap(this.mOxigenSystemPos);
+
+    let costMap = ComputeLee(map, oxygenSystem);
+
+    let oxygenSpreadTime = 0;
   }
 }
 
@@ -248,4 +360,7 @@ var prog1 = new intcodeComputer.IntcodeProgram(inst, remoteControl, remoteContro
 
 prog1.Run();
 
-remoteControl.PrintMap();
+remoteControl.PrintMap({ x: 0, y: 0 }).PrintReverse();
+
+var minDist = remoteControl.ComputeMinDistToOxygenSystem();
+console.log(minDist);

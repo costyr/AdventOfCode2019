@@ -20,6 +20,10 @@ class Matrix {
     }
   }
 
+  GetMatrix() {
+    return this.mMatix;
+  }
+
   SetValue(aLine, aCol, aValue) 
   {
     this.mMatix[aLine][aCol] = aValue;

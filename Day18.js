@@ -445,8 +445,17 @@ function FindPath3(aMap, aAllKeys, aAllDoors) {
   FindPath2(aMap, '@', startPos, aAllKeys, aAllDoors, "");
 }
 
-function FindMinPath(aMap, aStageKeys) {
+function FindPath(aCostMap, aKey, aPos, aPath, aAllKeys, aCost) {
+  let accessibleKeys = aCostMap.map[aPos.y][aPos.x];
+}
 
+function FindMinPath(aMap, aStageKeys) {
+  let costMap = ComputeMinTwoKeyCost(aMap, allDoors, allKeys);
+
+  for (let i = 0; i < aStageKeys; i++)
+  {
+    
+  }
 }
 
 function FindDeps(aMap, aPos, aKey, aAllKeys, aAllDoors, aStageKeys) {

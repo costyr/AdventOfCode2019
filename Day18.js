@@ -1,19 +1,15 @@
 const util = require('./Util.js');
 
-function ParseLine(aElem) 
-{
-  return aElem.split("");  
+function ParseLine(aElem) {
+  return aElem.split("");
 }
 
-function ParseMap(aElem) 
-{
+function ParseMap(aElem) {
   return ParseLine(aElem);
 }
 
-function PrintMap(aMap) 
-{
-  for (let i = 0; i < aMap.length; i++)
-  {
+function PrintMap(aMap) {
+  for (let i = 0; i < aMap.length; i++) {
     let line = "";
     for (let j = 0; j < aMap[i].length; j++)
       line += aMap[i][j];
@@ -21,41 +17,48 @@ function PrintMap(aMap)
   }
 }
 
-function GetAllKeys(aMap) 
-{
+function GetAllKeys(aMap, aKeysFilter) {
   let keys = [];
   for (let i = 0; i < aMap.length; i++)
-    for (let j = 0; j < aMap[i].length; j++) 
-    {
+    for (let j = 0; j < aMap[i].length; j++) {
       let charCode = aMap[i][j].charCodeAt(0);
-      if (charCode >= "a".charCodeAt(0) && charCode <= "z".charCodeAt(0))
-        keys.push({ key: aMap[i][j], pos: { x: j, y: i }});
+      if (charCode >= "a".charCodeAt(0) && charCode <= "z".charCodeAt(0)) 
+      {
+        let key = aMap[i][j];
+
+        if (aKeysFilter != undefined) 
+        {
+          if ((aKeysFilter.length > 0) && 
+              (aKeysFilter.indexOf(key) == -1))
+            continue;
+        }
+
+        let pos = { x: j, y: i };
+        keys.push({ key: key, pos: pos });
+      }
     }
 
   return keys;
 }
 
-function FindStart(aMap) 
-{
+function FindStart(aMap) {
   for (let i = 0; i < aMap.length; i++)
-    for (let j = 0; j < aMap[i].length; j++) 
+    for (let j = 0; j < aMap[i].length; j++)
       if (aMap[i][j] == '@')
-        return { x: j, y: i};
+        return { x: j, y: i };
   return null;
 }
 
-function SetDirections(aMap, aX, aY, aDirections) 
-{
+function SetDirections(aMap, aX, aY, aDirections) {
   if (aMap[aY][aX].directions == null)
     aMap[aY][aX].directions = aDirections;
 }
 
-function IsValidDirection(aMap, aDirection) 
-{
+function IsValidDirection(aMap, aDirection) {
   let x = aDirection.x;
   let y = aDirection.y;
   if ((x < 0) || (x >= aMap[0].length) ||
-      (y < 0) || (y >= aMap.length))
+    (y < 0) || (y >= aMap.length))
     return false;
 
   if (aMap[y][x] == '#')
@@ -68,54 +71,49 @@ function IsValidDirection(aMap, aDirection)
   return true;
 }
 
-function FindValidDirections(aMap, aPos) 
-{
+function FindValidDirections(aMap, aPos) {
   let x = aPos.x;
   let y = aPos.y;
 
-  let posTop = { x: x , y: y + 1};
-  let posBottom = { x: x , y: y - 1};
+  let posTop = { x: x, y: y + 1 };
+  let posBottom = { x: x, y: y - 1 };
   let posLeft = { x: x - 1, y: y };
   let posRight = { x: x + 1, y: y };
 
   let directions = [];
   if (IsValidDirection(aMap, posTop))
     directions.push(posTop);
-  
+
   if (IsValidDirection(aMap, posBottom))
     directions.push(posBottom);
-  
+
   if (IsValidDirection(aMap, posLeft))
     directions.push(posLeft);
-  
+
   if (IsValidDirection(aMap, posRight))
     directions.push(posRight);
 
   return directions;
 }
 
-function GetNext(aMap, aPos) 
-{
-  return aMap[aPos.y][aPos.x].directions.pop();    
+function GetNext(aMap, aPos) {
+  return aMap[aPos.y][aPos.x].directions.pop();
 }
 
-function GetValue(aMap, aPos) 
-{
+function GetValue(aMap, aPos) {
   return aMap[aPos.y][aPos.x];
 }
 
-function IsKey(aValue) 
-{
+function IsKey(aValue) {
   let charCode = aValue.charCodeAt(0);
-  if ((charCode >= "a".charCodeAt(0)) && 
-      (charCode <= "z".charCodeAt(0)))
+  if ((charCode >= "a".charCodeAt(0)) &&
+    (charCode <= "z".charCodeAt(0)))
     return true;
-  
+
   return false;
 }
 
-function FoundAllKeys(aKeys, aAllKeys) 
-{
+function FoundAllKeys(aKeys, aAllKeys) {
   if (aKeys.length != aAllKeys.length)
     return false;
 
@@ -123,39 +121,35 @@ function FoundAllKeys(aKeys, aAllKeys)
   keysSorted.sort();
   let allKeysSorted = util.CopyObject(aAllKeys).split("");
   allKeysSorted.sort();
-  
+
   return (keysSorted == allKeysSorted);
 }
 
-function FindPath(aMap, aStateMap, aAllKeys, aAllDoors) 
-{
+function FindPath(aMap, aStateMap, aAllKeys, aAllDoors) {
   let start = FindStart(aMap);
   let path = [start];
   let keys = "";
   let stack = [start];
-  
+
   let pos;
-  while (stack.length > 0)
-  {
+  while (stack.length > 0) {
     pos = stack.pop();
     console.log(pos);
 
     let valueAtPos = GetValue(aMap, pos);
 
-    if (IsKey(valueAtPos)) 
-    {
+    if (IsKey(valueAtPos)) {
       UnlockDoor(aMap, allDoors, valueAtPos);
 
       keys += valueAtPos;
-      
+
       console.log(keys);
-      if (FoundAllKeys(keys, aAllKeys)) 
-      {
+      if (FoundAllKeys(keys, aAllKeys)) {
         console.log("Found all keys!");
         break;
       }
     }
-    else if ((valueAtPos != '.') && (valueAtPos != '@')) 
+    else if ((valueAtPos != '.') && (valueAtPos != '@'))
       continue;
 
     path.push(pos);
@@ -172,11 +166,9 @@ function FindPath(aMap, aStateMap, aAllKeys, aAllDoors)
   }
 }
 
-function CreateStateMap(aMap) 
-{
+function CreateStateMap(aMap) {
   let stateMap = [];
-  for (let i = 0; i < aMap.length; i++) 
-  {
+  for (let i = 0; i < aMap.length; i++) {
     stateMap[i] = [];
     for (let j = 0; j < aMap[i].length; j++)
       stateMap[i][j] = { cost: 0, visited: false };
@@ -185,67 +177,68 @@ function CreateStateMap(aMap)
   return stateMap;
 }
 
-function ResetVisited(aStateMap) 
-{
-  for (let i = 0; i < aMap.length; i++) 
+function ResetVisited(aStateMap) {
+  for (let i = 0; i < aMap.length; i++)
     for (let j = 0; j < aMap[i].length; j++)
       aStateMap[i][i].visited = false;
 }
 
-function UpdateCost(aStateMap, aPos) 
-{
+function UpdateCost(aStateMap, aPos) {
   aStateMap[aPos.y][aPos.x].cost++;
 }
 
-function MarkVisited(aStateMap, aPos) 
-{
+function MarkVisited(aStateMap, aPos) {
   return aStateMap[aPos.y][aPos.x].visited = true;
 }
 
-function IsVisited(aStateMap, aPos) 
-{
+function IsVisited(aStateMap, aPos) {
   return aStateMap[aPos.y][aPos.x].visited;
 }
 
-function GetAllDoors(aMap) 
-{
+function GetAllDoors(aMap, aDoorsFilter) {
   let doors = [];
   for (let i = 0; i < aMap.length; i++)
-    for (let j = 0; j < aMap[i].length; j++) 
-    {
+    for (let j = 0; j < aMap[i].length; j++) {
       let charCode = aMap[i][j].charCodeAt(0);
-      if (charCode >= "A".charCodeAt(0) && charCode <= "Z".charCodeAt(0))
-        doors.push({ door: aMap[i][j], pos: { x: j, y: i } });
+      if (charCode >= "A".charCodeAt(0) && charCode <= "Z".charCodeAt(0)) 
+      {
+        let door = aMap[i][j];
+
+        if (aDoorsFilter != undefined) 
+        {
+          if ((aDoorsFilter.length > 0) && 
+              (aDoorsFilter.indexOf(door) == -1))
+            continue;
+        }
+
+        let pos = { x: j, y: i };
+        doors.push({ door: door, pos: pos });
+      }
     }
 
   return doors;
 }
 
-function UnlockDoor(aMap, aDoors, aKey) 
-{
+function UnlockDoor(aMap, aDoors, aKey) {
   let door = aKey.toUpperCase();
   for (let i = 0; i < aDoors.length; i++)
-    if (door == aDoors[i].door)
-    {
+    if (door == aDoors[i].door) {
       aMap[aDoors[i].pos.y][aDoors[i].pos.x] = '.';
       return;
     }
 }
 
-function UnlockDoors(aMap, aAllDoors, aKeys) 
-{
+function UnlockDoors(aMap, aAllDoors, aKeys) {
   if (aKeys.length == 0)
-   return;
+    return;
 
   for (let i = 0; i < aKeys.length; i++)
     UnlockDoor(aMap, aAllDoors, aKeys[i]);
 }
 
-function InitCostMap(aMap, aValue) 
-{
+function InitCostMap(aMap, aValue) {
   let costMap = [];
-  for (let i = 0; i < aMap.length; i++) 
-  {
+  for (let i = 0; i < aMap.length; i++) {
     costMap[i] = [];
     for (let j = 0; j < aMap[i].length; j++)
       costMap[i][j] = aValue;
@@ -254,33 +247,28 @@ function InitCostMap(aMap, aValue)
   return costMap;
 }
 
-function ResetCostMap(aCostMap) 
-{
-  for (let i = 0; i < aMap.length; i++) 
+function ResetCostMap(aCostMap) {
+  for (let i = 0; i < aMap.length; i++)
     for (let j = 0; j < aMap[i].length; j++)
       aCostMap[i][j] = -1;
 }
 
-function GetCost(aCostMap, aPos) 
-{
-  if ((aCostMap[aPos.y] == undefined) || 
-      (aCostMap[aPos.y][aPos.x] == undefined))
+function GetCost(aCostMap, aPos) {
+  if ((aCostMap[aPos.y] == undefined) ||
+    (aCostMap[aPos.y][aPos.x] == undefined))
     return -1;
   return aCostMap[aPos.y][aPos.x];
 }
 
-function SetCost(aCostMap, aPos, aCost) 
-{
+function SetCost(aCostMap, aPos, aCost) {
   if (aCostMap[aPos.y] == undefined)
     aCostMap[aPos.y] = [];
   aCostMap[aPos.y][aPos.x] = aCost;
 }
 
-function ComputeLee(aMap, aStart, aStageKeys, aAllKeys) 
-{
+function ComputeLee(aMap, aStart, aStageKeys, aAllKeys) {
   let targetPoints = [];
-  if (aStageKeys.length > 0) 
-  {
+  if (aStageKeys.length > 0) {
     for (let i = 0; i < aAllKeys.length; i++)
       if (aStageKeys.indexOf(aAllKeys[i].key) == -1)
         targetPoints.push(aAllKeys[i].pos);
@@ -290,29 +278,26 @@ function ComputeLee(aMap, aStart, aStageKeys, aAllKeys)
   let stack = [aStart];
 
   SetCost(costMap, aStart, 0);
-  
+
   let pos;
   let targetCount = 0;
-  while (stack.length > 0)
-  {
+  while (stack.length > 0) {
     pos = stack.pop();
 
     let cost = GetCost(costMap, pos);
 
     let directions = FindValidDirections(aMap, pos);
-    for (let i = 0; i < directions.length; i++) 
-    {
+    for (let i = 0; i < directions.length; i++) {
       if (GetCost(costMap, directions[i]) >= 0)
         continue;
 
       SetCost(costMap, directions[i], cost + 1);
 
-      if (aStageKeys.length > 0) 
-      {
+      if (aStageKeys.length > 0) {
         for (let j = 0; j < targetPoints.length; j++)
           if ((directions[i].x == targetPoints[j].x) &&
-              (directions[i].y == targetPoints[j].y))
-            targetCount ++;
+            (directions[i].y == targetPoints[j].y))
+            targetCount++;
 
         if (targetCount >= targetPoints.length)
           break;
@@ -325,24 +310,21 @@ function ComputeLee(aMap, aStart, aStageKeys, aAllKeys)
   return costMap;
 }
 
-function GetAccessibleKeys(aCostMap, aAllKeys, aKey)
-{
+function GetAccessibleKeys(aCostMap, aAllKeys, aKey) {
   let accessibleKeys = [];
-  for (let i = 0; i < aAllKeys.length; i++)
-  {
+  for (let i = 0; i < aAllKeys.length; i++) {
     if (aKey == aAllKeys[i].key)
       continue;
 
     let keyCost = GetCost(aCostMap, aAllKeys[i].pos);
     if (keyCost >= 0)
-      accessibleKeys.push({ key: aAllKeys[i].key, cost: keyCost });  
+      accessibleKeys.push({ key: aAllKeys[i].key, cost: keyCost });
   }
 
   return accessibleKeys;
 }
 
-function GetKeyPos(aAllKeys, aKey) 
-{
+function GetKeyPos(aAllKeys, aKey) {
   for (let i = 0; i < aAllKeys.length; i++)
     if (aKey == aAllKeys[i].key)
       return aAllKeys[i].pos;
@@ -350,18 +332,16 @@ function GetKeyPos(aAllKeys, aKey)
   return null;
 }
 
-function SortByCost(aKey1, aKey2) 
-{
+function SortByCost(aKey1, aKey2) {
   if (aKey1.cost < aKey2.cost)
     return -1;
   else if (aKey1.cost > aKey2.cost)
     return 1;
-  else 
+  else
     return 0;
 }
 
-function ComputeMinTwoKeyCost(aMap, aAllDoors, aAllKeys) 
-{
+function ComputeMinTwoKeyCost(aMap, aAllDoors, aAllKeys) {
   let map = util.CopyObject(aMap);
 
   let accessibleMap = InitCostMap(aMap, []);
@@ -374,17 +354,15 @@ function ComputeMinTwoKeyCost(aMap, aAllDoors, aAllKeys)
 
   let minCost = Number.MAX_SAFE_INTEGER;
   let maxCost = 0;
-  for (let i = 0; i < aAllKeys.length; i++)
-  {
+  for (let i = 0; i < aAllKeys.length; i++) {
     let pos = aAllKeys[i].pos;
     let costMap = ComputeLee(map, pos, "", aAllKeys);
-  
+
     let accessibleKeys = GetAccessibleKeys(costMap, aAllKeys, aAllKeys[i].key);
 
     accessibleMap[pos.y][pos.x] = accessibleKeys;
-    
-    for (let j = 0; j < accessibleKeys.length; j++) 
-    {
+
+    for (let j = 0; j < accessibleKeys.length; j++) {
       if (accessibleKeys[j].key == aAllKeys[i].key)
         continue;
 
@@ -393,17 +371,15 @@ function ComputeMinTwoKeyCost(aMap, aAllDoors, aAllKeys)
         minCost = cost;
 
       if (cost > maxCost)
-        maxCost = cost;  
+        maxCost = cost;
     }
   }
-  return { map: accessibleMap, min: minCost, max: maxCost };  
+  return { map: accessibleMap, min: minCost, max: maxCost };
 }
 
-function FindAccessible(aMap, aGraph, aKey, aPos, aAllKeys, aAllDoors, aStageKeys, aCost, aCostMap) 
-{ 
+function FindAccessible(aMap, aGraph, aKey, aPos, aAllKeys, aAllDoors, aStageKeys, aCost, aCostMap) {
   let accessibleKeys = aCostMap.map[aPos.y][aPos.x];
-  if (aStageKeys.length < aAllKeys.length) 
-  {
+  if (aStageKeys.length < aAllKeys.length) {
     let map = util.CopyObject(aMap);
 
     UnlockDoors(map, aAllDoors, aStageKeys);
@@ -415,35 +391,32 @@ function FindAccessible(aMap, aGraph, aKey, aPos, aAllKeys, aAllDoors, aStageKey
 
   accessibleKeys.sort(SortByCost);
 
-  for (let i = 0; i < accessibleKeys.length; i++) 
-  {
+  for (let i = 0; i < accessibleKeys.length; i++) {
     let newKey = accessibleKeys[i].key;
     let cost = aCost + accessibleKeys[i].cost;
     let newKeyPos = GetKeyPos(aAllKeys, newKey);
 
     if (aStageKeys.indexOf(newKey) >= 0)
       continue;
-  
+
     let newStageKeys = util.CopyObject(aStageKeys);
     newStageKeys += newKey;
 
     let graphNode = newStageKeys;
 
     let minCostEstimate = cost + (aAllKeys.length - graphNode.length) * aCostMap.min;
-    let maxCostEstimate = cost + (aAllKeys.length - graphNode.length) * aCostMap.max;  
+    let maxCostEstimate = cost + (aAllKeys.length - graphNode.length) * aCostMap.max;
 
     if (minCostEstimate >= aGraph.min)
       continue;
 
-      if (maxCostEstimate < aGraph.min) 
-      {
-        aGraph.path = graphNode;
-        aGraph.min = maxCostEstimate;
-        console.log(graphNode + "-->" + cost);
-      }
-      
-    if (graphNode.length < allKeys.length) 
-    {
+    if (maxCostEstimate < aGraph.min) {
+      aGraph.path = graphNode;
+      aGraph.min = maxCostEstimate;
+      console.log(graphNode + "-->" + cost);
+    }
+
+    if (graphNode.length < allKeys.length) {
       //console.log(newStageKeys + "-->" + cost + " " + minCostEstimate + " " + maxCostEstimate);
       FindAccessible(map, aGraph, newKey, newKeyPos, aAllKeys, aAllDoors, newStageKeys, cost, aCostMap);
     }
@@ -453,20 +426,69 @@ function FindAccessible(aMap, aGraph, aKey, aPos, aAllKeys, aAllDoors, aStageKey
   }
 }
 
-function FindPath2(aMap, aAllKeys, aAllDoors) 
-{
-  let startPos = FindStart(aMap);
-
+function FindPath2(aMap, aStartKey, aStartPos, aAllKeys, aAllDoors, aStageKeys) {
   let graph = { path: "", min: Number.MAX_SAFE_INTEGER };
 
   let costMap = ComputeMinTwoKeyCost(aMap, allDoors, allKeys);
-  
+
   console.log(costMap.min);
   console.log(costMap.max);
 
-  FindAccessible(aMap, graph, '@', startPos, aAllKeys, aAllDoors, "", 0, costMap);
+  FindAccessible(aMap, graph, aStartKey, aStartPos, aAllKeys, aAllDoors, aStageKeys, 0, costMap);
 
   console.log(graph.path + "-->" + graph.min);
+  return graph;
+}
+
+function FindPath3(aMap, aAllKeys, aAllDoors) {
+  let startPos = FindStart(aMap);
+  FindPath2(aMap, '@', startPos, aAllKeys, aAllDoors, "");
+}
+
+function FindMinPath(aMap, aStageKeys) {
+
+}
+
+function FindDeps(aMap, aPos, aKey, aAllKeys, aAllDoors, aStageKeys) {
+  let map = util.CopyObject(aMap);
+
+  UnlockDoors(map, aAllDoors, aStageKeys);
+
+  let costMap = ComputeLee(map, aPos, aStageKeys, aAllKeys);
+
+  accessibleKeys = GetAccessibleKeys(costMap, aAllKeys, aKey);
+
+  let nextStage = "";
+  for (let i = 0; i < accessibleKeys.length; i++) {
+    let newKey = accessibleKeys[i].key;
+
+    if (aStageKeys.indexOf(newKey) >= 0)
+      continue;
+
+    nextStage += newKey;
+  }
+
+  return nextStage;
+}
+
+function FindAllDeps(aMap, aAllKeys, aAllDoors) {
+  let startPos = FindStart(aMap);
+  let startKey = "@";
+
+  let stageKeys = "";
+  let stages = [];
+  while (true) {
+    let nextDeps = FindDeps(aMap, startPos, startKey, aAllKeys, aAllDoors, stageKeys);
+
+    stageKeys += nextDeps;
+
+    stages.push(nextDeps);
+    
+    if (stageKeys.length == allKeys.length)
+     break;
+  }
+
+  console.log(stages);
 }
 
 var map = util.MapInput("./Day18TestInput3.txt", ParseMap, "\r\n");
@@ -477,4 +499,5 @@ var allKeys = GetAllKeys(map);
 var allDoors = GetAllDoors(map);
 
 console.log(allKeys.length);
-FindPath2(map, allKeys, allDoors);
+//FindPath2(map, allKeys, allDoors);
+FindAllDeps(map, allKeys, allDoors);

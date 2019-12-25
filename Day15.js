@@ -350,6 +350,17 @@ class RemoteControl {
     let costMap = ComputeLee(map, oxygenSystem);
 
     let oxygenSpreadTime = 0;
+    for (let i = 0; i < costMap.length; i++)
+    {
+      if (costMap[i] == undefined)
+        continue;
+      for (let j = 0; j < costMap[i].length; j++)
+      {
+        if ((costMap[i][j] != undefined) && (costMap[j][i] > oxygenSpreadTime))
+          oxygenSpreadTime = costMap[j][i];
+      }
+    }
+    return oxygenSpreadTime;
   }
 }
 
@@ -364,3 +375,6 @@ remoteControl.PrintMap({ x: 0, y: 0 }).PrintReverse();
 
 var minDist = remoteControl.ComputeMinDistToOxygenSystem();
 console.log(minDist);
+
+var oxygenSpreadTime = remoteControl.ComputeOxygenSpread();
+console.log(oxygenSpreadTime);

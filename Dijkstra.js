@@ -31,7 +31,7 @@ class Graph {
 class PriorityQueue {
   constructor(aStatNode) 
   {
-    this.mQueue = [aStatNode.GetId()];
+    this.mQueue = [aStatNode];
     this.mSortFunc = null;
   }
 
@@ -47,7 +47,7 @@ class PriorityQueue {
   Push(aNode) {
     let found = false;
     for (let i = 0; i < this.mQueue.length; i++)
-      if (aNode.IsEqual(aNode))
+      if (JSON.stringify(aNode) == JSON.stringify(this.mQueue[i]))
       {
         found = true;
         break;
@@ -76,31 +76,54 @@ class PriorityQueue {
 class NodeState {
   constructor() {
     this.mState = [];
+    this.mSize = 0;
+  }
+  
+  GetVisitedCount() {
+    let count = 0;
+    for (let state in this.mState)
+      if (this.mState[state].visited)
+        count++;
+
+    return count;
+  }
+
+
+  GetId(aNode) {
+    return JSON.stringify(aNode);
   }
 
   InitState(aNode) {
-    if (this.mState[aNode.GetId()] == undefined)
-      this.mState[aNode.GetId()] = { visited: false, dist: Number.MAX_SAFE_INTEGER };
+
+    let nodeId = this.GetId(aNode);
+
+    if (this.mState[nodeId] == undefined) 
+    {
+      this.mState[nodeId] = { visited: false, dist: Number.MAX_SAFE_INTEGER };
+      this.mSize++;
+    }
   }
 
   SetDist(aNode, aDist) {
     this.InitState(aNode);
-    this.mState[aNode.GetId()].dist = aDist;
+    this.mState[this.GetId(aNode)].dist = aDist;
   }
 
   GetDist(aNode) {
-    return this.mState[aNode.GetId()].dist;
+    if (this.mState[this.GetId(aNode)] == undefined)
+      return Number.MAX_SAFE_INTEGER;
+    return this.mState[this.GetId(aNode)].dist;
   }
 
   SetVisited(aNode) {
     this.InitState(aNode);
-    this.mState[aNode.GetId()].visited = true;
+    this.mState[this.GetId(aNode)].visited = true;
   }
 
   IsVisited(aNode) {
-    if (this.mState[aNode.GetId()] == undefined)
+    if (this.mState[this.GetId(aNode)] == undefined)
       return false;
-    return this.mState[aNode.GetId()].visited;
+    return this.mState[this.GetId(aNode)].visited;
   }
 }
 
@@ -159,6 +182,7 @@ class Dijkstra {
 
 module.exports = {
   Node,
+  NodeState,
   Graph,
   PriorityQueue,
   Dijkstra

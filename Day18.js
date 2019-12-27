@@ -1,4 +1,5 @@
 const util = require('./Util.js');
+const alg = require('./dijkstra.js');
 
 function ParseLine(aElem) {
   return aElem.split("");
@@ -17,7 +18,7 @@ function PrintMap(aMap) {
   }
 }
 
-function GetAllKeys(aMap, aKeysFilter) {
+function GetAllKeys(aMap) {
   let keys = [];
   for (let i = 0; i < aMap.length; i++)
     for (let j = 0; j < aMap[i].length; j++) {
@@ -25,14 +26,6 @@ function GetAllKeys(aMap, aKeysFilter) {
       if (charCode >= "a".charCodeAt(0) && charCode <= "z".charCodeAt(0)) 
       {
         let key = aMap[i][j];
-
-        if (aKeysFilter != undefined) 
-        {
-          if ((aKeysFilter.length > 0) && 
-              (aKeysFilter.indexOf(key) == -1))
-            continue;
-        }
-
         let pos = { x: j, y: i };
         keys.push({ key: key, pos: pos });
       }
@@ -195,7 +188,7 @@ function IsVisited(aStateMap, aPos) {
   return aStateMap[aPos.y][aPos.x].visited;
 }
 
-function GetAllDoors(aMap, aDoorsFilter) {
+function GetAllDoors(aMap) {
   let doors = [];
   for (let i = 0; i < aMap.length; i++)
     for (let j = 0; j < aMap[i].length; j++) {
@@ -203,14 +196,6 @@ function GetAllDoors(aMap, aDoorsFilter) {
       if (charCode >= "A".charCodeAt(0) && charCode <= "Z".charCodeAt(0)) 
       {
         let door = aMap[i][j];
-
-        if (aDoorsFilter != undefined) 
-        {
-          if ((aDoorsFilter.length > 0) && 
-              (aDoorsFilter.indexOf(door) == -1))
-            continue;
-        }
-
         let pos = { x: j, y: i };
         doors.push({ door: door, pos: pos });
       }
@@ -445,17 +430,47 @@ function FindPath3(aMap, aAllKeys, aAllDoors) {
   FindPath2(aMap, '@', startPos, aAllKeys, aAllDoors, "");
 }
 
-function FindPath(aCostMap, aKey, aPos, aPath, aAllKeys, aCost) {
+function FindPath99(aCostMap, aPos, aPath, aCost, aPathMap, aAllKeys, aStageKeys) {
+  
+  if (aStageKeys.length == aPath.length)
+  {
+    aPathMap[aPath] = aCost;
+    //console.log(aPath + "-->" + aCost);
+    return;
+  }
+
   let accessibleKeys = aCostMap.map[aPos.y][aPos.x];
+
+  for (let i = 0; i < accessibleKeys.length; i++)
+  {
+    let newKey = accessibleKeys[i].key;
+    let cost = accessibleKeys[i].cost;
+    if (aStageKeys.indexOf(newKey) == -1)
+      continue;
+
+    if (aPath.indexOf(newKey) >= 0)
+      continue;
+    
+    let newCost = aCost + cost;
+    let newPath = aPath + newKey;
+
+    let newKeyPos = GetKeyPos(aAllKeys, newKey);
+
+    FindPath99(aCostMap, newKeyPos, newPath, newCost, aPathMap, aAllKeys, aStageKeys);
+  }
 }
 
-function FindMinPath(aMap, aStageKeys) {
-  let costMap = ComputeMinTwoKeyCost(aMap, allDoors, allKeys);
+function FindStagePaths(aCostMap, aAllKeys, aStageKeys) {
 
-  for (let i = 0; i < aStageKeys; i++)
+  let pathMap = [];
+  for (let i = 0; i < aStageKeys.length; i++)
   {
-    
+    let key = aStageKeys[i];
+    let pos = GetKeyPos(aAllKeys, key);
+    FindPath99(aCostMap, pos, key, 0, pathMap, aAllKeys, aStageKeys);
   }
+
+  return pathMap;
 }
 
 function FindDeps(aMap, aPos, aKey, aAllKeys, aAllDoors, aStageKeys) {
@@ -497,7 +512,191 @@ function FindAllDeps(aMap, aAllKeys, aAllDoors) {
      break;
   }
 
+  return stages;
+}
+
+function StageIsInPath(aPath, aStage) {
+  let path = util.CopyObject(aPath);
+  path.sort();
+  let stage = util.CopyObject(aStage);
+  stage.sort();
+
+  return path.includes(aStage);
+}
+
+function SetStageVisited(aUsedStages, aStage) {
+  aUsedStages[aStage] = 1;
+}
+
+function StageIsVisited(aUsedStages, aStage) {
+  if (aUsedStages[aStage] != undefined)
+    return true;
+  return false;
+}
+
+function GetKeysCost(aCostMap, aAllKeys, aKey1, aKey2) {
+  let pos = GetKeyPos(aAllKeys, aKey1);
+  let accessibleKeys = aCostMap.map[pos.y][pos.x];
+
+  for (let i = 0; i < accessibleKeys.length; i++)
+  {
+    let key = accessibleKeys[i].key;
+    if (key == aKey2)
+      return accessibleKeys[i].cost;
+  }
+
+  return 0;
+}
+
+function FindPath100(aCostMap, aAllStagePaths, aStageIndex, aAllKeys, aPath, aCost, aMin) {
+
+  console.log(aPath + ": " + aCost);
+  if (aStageIndex >= aAllStagePaths.length) {
+    if (aCost < aMin.cost) {
+      aMin.cost = aCost;
+      aMin.path = aPath;
+      //console.log(aPath + ": " + aCost);
+    }
+    return;
+  }
+
+  for (let stage in aAllStagePaths[aStageIndex])
+  {
+    let path = aPath + stage;
+    let pathCost = aCost + aAllStagePaths[aStageIndex][stage];
+
+    if (aStageIndex > 0) 
+    {
+      let lastKey = aPath[aPath.length - 1];
+      let nextKey = stage[0];
+      pathCost += GetKeysCost(aCostMap, aAllKeys, lastKey, nextKey);
+    }
+
+    FindPath100(aCostMap, aAllStagePaths, aStageIndex + 1, aAllKeys, path, pathCost, aMin);
+  }
+}
+
+function ComapareStages(aMap, aAllKeys, aAllDoors) {
+  let stages = FindAllDeps(aMap, aAllKeys, aAllDoors);
+  let costMap = ComputeMinTwoKeyCost(aMap, aAllDoors, aAllKeys);
+
   console.log(stages);
+
+  let allStagePaths = [];
+
+  for (let i = 0; i < stages.length; i++) {
+    let stagePaths = FindStagePaths(costMap, aAllKeys, stages[i]);
+    allStagePaths.push(stagePaths);
+  }
+
+  let stageMins = [];
+  for (let i = 0; i < allStagePaths.length; i++)
+  {
+    let min = Number.MAX_SAFE_INTEGER;
+    let path = "";
+
+    for (let stage in allStagePaths[i])
+    {
+      let cost = allStagePaths[i][stage];
+      if (cost < min)
+      {
+        min = cost;
+        path = stage;
+      }
+    }
+
+    stageMins.push({path: path, min: min});
+
+    //console.log(stage + "-->" + allStagePaths[stage]);
+  }
+
+  console.log(JSON.stringify(stageMins));
+
+  /*let min = {path: "", cost: Number.MAX_SAFE_INTEGER };
+
+  FindPath100(costMap, allStagePaths, 0, aAllKeys, "", 0, min);*/
+
+  //console.log(min.path + ": " + min.cost);
+}
+
+function GetNeighbours(aMap, aKey, aPos, aAllKeys, aAllDoors, aStageKeys) {
+  let map = util.CopyObject(aMap);
+
+  UnlockDoors(map, aAllDoors, aStageKeys);
+
+  let costMap = ComputeLee(map, aPos, aStageKeys, aAllKeys);
+
+  accessibleKeys = GetAccessibleKeys(costMap, aAllKeys, aKey);
+
+  return accessibleKeys;
+}
+
+function Sort123(aState, aElem1, aElem2) {
+  let cost1 = aState.GetDist(aElem1.key);
+  let cost2 = aState.GetDist(aElem2.key);
+
+  if (cost1 < cost2)
+    return -1;
+  else if (cost1 > cost2)
+    return 1;
+  else 
+    return 0;
+}
+
+function Dijkstra(aMap, aAllKeys, aAllDoors) {
+  let start = FindStart(aMap);
+
+  let queue = new alg.PriorityQueue( { key: '@', pos: start});
+  let state = new alg.NodeState();
+
+  queue.SetSortFunc(Sort123.bind(null, state));
+
+  state.SetDist('@', 0);
+
+  let path = [];
+  let end = "";
+  while (!queue.IsEmpty()) {
+    let currentNode = queue.Pop();
+    let currentDist = state.GetDist(currentNode.key);
+
+    if ((state.GetVisitedCount() + 1) == aAllKeys.length) {
+      endNode = currentNode.key;
+      break;
+    }
+
+    let neighbours = GetNeighbours(aMap, currentNode.key, 
+      currentNode.pos, aAllKeys, aAllDoors, currentNode.key != '@' ? currentNode.key : "");
+
+    for (let i = 0; i < neighbours.length; i++) {
+      let neighbour = neighbours[i];
+
+      if (state.IsVisited(neighbour.key))
+        continue;
+
+      let estimateDist = currentDist + neighbour.cost;
+      if (estimateDist < state.GetDist(neighbour.key)) {
+        path[neighbour.key] = currentNode.key;
+        state.SetDist(neighbour.key, estimateDist);
+      }
+
+      let pos = GetKeyPos(aAllKeys, neighbour.key);
+      queue.Push({ key: neighbour.key, pos: pos } );
+    }
+
+    state.SetVisited(currentNode.key);
+  }
+
+  let goodPath = [];
+  let next = end;
+  while (1) {
+    goodPath.unshift(next);
+
+    if (next == start)
+      break;
+    next = path[next];
+  }
+
+  return { dist: state.GetDist(end), path: goodPath };
 }
 
 var map = util.MapInput("./Day18TestInput3.txt", ParseMap, "\r\n");
@@ -508,5 +707,7 @@ var allKeys = GetAllKeys(map);
 var allDoors = GetAllDoors(map);
 
 console.log(allKeys.length);
-//FindPath2(map, allKeys, allDoors);
-FindAllDeps(map, allKeys, allDoors);
+
+FindPath3(map, allKeys, allDoors);
+
+//Dijkstra(map, allKeys, allDoors);

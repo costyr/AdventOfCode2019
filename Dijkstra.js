@@ -64,8 +64,6 @@ class PriorityQueue {
   Sort() {
     if (this.mSortFunc)
       this.mQueue.sort(this.mSortFunc);
-    else
-      this.mQueue.sort();
   }
 
   IsEmpty() {

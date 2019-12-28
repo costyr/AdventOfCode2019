@@ -631,9 +631,34 @@ function GetNeighbours(aMap, aKey, aPos, aAllKeys, aAllDoors, aStageKeys) {
   return accessibleKeys;
 }
 
+function GetNeighbours44(aMap, aKey, aPos, aAllKeys, aAllDoors, aStageKeys) {
+  let accessibleKeys = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+
+  let depsMap = [];
+  depsMap['a'] = ['j'];
+  depsMap['e'] = ['k'];
+  depsMap['f'] = ['l'];
+  depsMap['g'] = ['i'];
+  depsMap['h'] = ['p'];
+  depsMap['d'] = ['o'];
+  depsMap['b'] = ['n'];
+  depsMap['c'] = ['m'];
+
+  for (let i = 0; i < aStageKeys.length; i++)
+  {
+    let deps = depsMap[aStageKeys[i]];
+    if (deps == undefined)
+      continue;
+    for (let j = 0; j < deps.length; j++)
+      accessibleKeys.push(deps[j]);  
+  }
+ 
+  return accessibleKeys;
+}
+
 function Sort123(aState, aElem1, aElem2) {
-  let cost1 = aState.GetDist(aElem1.key);
-  let cost2 = aState.GetDist(aElem2.key);
+  let cost1 = aState.GetDist(aElem1);
+  let cost2 = aState.GetDist(aElem2);
 
   if (cost1 < cost2)
     return -1;
@@ -643,60 +668,36 @@ function Sort123(aState, aElem1, aElem2) {
     return 0;
 }
 
-function Dijkstra(aMap, aAllKeys, aAllDoors) {
+function BFS(aMap, aAllKeys, aAllDoors) {
   let start = FindStart(aMap);
 
-  let queue = new alg.PriorityQueue( { key: '@', pos: start});
-  let state = new alg.NodeState();
+  let queue = new alg.PriorityQueue( { key: '@', keys: ""});
 
-  queue.SetSortFunc(Sort123.bind(null, state));
-
-  state.SetDist('@', 0);
-
-  let path = [];
-  let end = "";
   while (!queue.IsEmpty()) {
     let currentNode = queue.Pop();
-    let currentDist = state.GetDist(currentNode.key);
 
-    if ((state.GetVisitedCount() + 1) == aAllKeys.length) {
+    console.log(currentNode.key + " " + currentNode.keys);
+
+    if (currentNode.keys.length == aAllKeys.length) {
       endNode = currentNode.key;
-      break;
     }
 
-    let neighbours = GetNeighbours(aMap, currentNode.key, 
-      currentNode.pos, aAllKeys, aAllDoors, currentNode.key != '@' ? currentNode.key : "");
+    let pos = (currentNode.key == '@') ? start : GetKeyPos(aAllKeys, currentNode.key);
+    let neighbours = GetNeighbours44(aMap, currentNode.key, pos, aAllKeys, aAllDoors, currentNode.keys);
 
     for (let i = 0; i < neighbours.length; i++) {
       let neighbour = neighbours[i];
 
-      if (state.IsVisited(neighbour.key))
+      let keys = currentNode.keys;
+      if (keys.indexOf(neighbour) != -1)
         continue;
+        
+      keys += neighbour;
+      let newNode = { key: neighbour, keys: keys }
 
-      let estimateDist = currentDist + neighbour.cost;
-      if (estimateDist < state.GetDist(neighbour.key)) {
-        path[neighbour.key] = currentNode.key;
-        state.SetDist(neighbour.key, estimateDist);
-      }
-
-      let pos = GetKeyPos(aAllKeys, neighbour.key);
-      queue.Push({ key: neighbour.key, pos: pos } );
+      queue.Push(newNode);
     }
-
-    state.SetVisited(currentNode.key);
   }
-
-  let goodPath = [];
-  let next = end;
-  while (1) {
-    goodPath.unshift(next);
-
-    if (next == start)
-      break;
-    next = path[next];
-  }
-
-  return { dist: state.GetDist(end), path: goodPath };
 }
 
 var map = util.MapInput("./Day18TestInput3.txt", ParseMap, "\r\n");
@@ -708,6 +709,6 @@ var allDoors = GetAllDoors(map);
 
 console.log(allKeys.length);
 
-FindPath3(map, allKeys, allDoors);
+//FindPath3(map, allKeys, allDoors);
 
-//Dijkstra(map, allKeys, allDoors);
+BFS(map, allKeys, allDoors);

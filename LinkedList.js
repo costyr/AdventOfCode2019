@@ -1,6 +1,5 @@
 class ListNode {
-  constructor(aValue) 
-  {
+  constructor(aValue) {
     this.mValue = aValue;
     this.mNext = null;
     this.mPrev = null;
@@ -8,76 +7,66 @@ class ListNode {
 }
 
 class LinkedList {
-  constructor() 
-  {
+  constructor() {
     this.mHead = null;
     this.mTail = null;
     this.mSize = 0;
   }
 
-  GetTail() 
-  {
+  GetTail() {
     return this.mTail;
   }
 
-  GetHead() 
-  {
+  GetHead() {
     return this.mHead;
   }
 
-  GetSize() 
-  {
+  GetSize() {
     return this.mSize;
   }
 
-  AddTail(aValue) 
-  {
+  AddTail(aValue) {
     let listNode = new ListNode(aValue);
 
     if (this.mTail == null) {
       this.mTail = listNode;
       this.mHead = listNode;
     }
-    else
-    {
+    else {
       this.mTail.mNext = listNode;
       listNode.mPrev = this.mTail;
       this.mTail = listNode;
     }
 
-    this.mSize ++;
+    this.mSize++;
 
     return listNode;
   }
 
-  AddHead(aValue) 
-  {
+  AddHead(aValue) {
     let listNode = new ListNode(aValue);
-   
+
     if (this.mTail == null) {
       this.mTail = listNode;
       this.mHead = listNode;
     }
-    else 
-    {
+    else {
       listNode.mNext = this.mHead;
       this.mHead.mPrev = listNode;
       this.mHead = listNode;
     }
 
-    this.mSize ++;
+    this.mSize++;
 
     return listNode;
   }
 
-  AddAfter(aNode, aValue) 
-  {
+  AddAfter(aNode, aValue) {
     let listNode = new ListNode(aValue);
 
-    if (aNode)
-    {
+    if (aNode) {
       let next = aNode.mNext;
-      if (next) 
+      if (next)
         next.mPrev = listNode;
 
       aNode.mNext = listNode;
@@ -88,25 +77,22 @@ class LinkedList {
     if (aNode == this.mTail)
       this.mTail = listNode;
 
-    this.mSize ++;
+    this.mSize++;
 
     return listNode;
   }
 
-  GetValueAt(aIndex) 
-  {
+  GetValueAt(aIndex) {
     let node = this.GetNodeAt(aIndex)
     if (node)
       return node.mValue;
     return null;
   }
 
-  GetNodeAt(aIndex) 
-  {
+  GetNodeAt(aIndex) {
     let i = 0;
     let node = this.mHead;
-    while (node)
-    {
+    while (node) {
       if (aIndex == i)
         return node;
       node = node.mNext;
@@ -116,41 +102,35 @@ class LinkedList {
     return null;
   }
 
-  GetNodeNthPosBackFromNode(aNode, aPosNumber) 
-  {
+  GetNodeNthPosBackFromNode(aNode, aPosNumber) {
     let node = aNode;
     let count = aPosNumber;
-    while (count > 0)
-    {
+    while (count > 0) {
       node = node.mPrev;
       if (node == null)
         node = this.mTail;
-      count --;
+      count--;
     }
-    
+
     return node;
   }
 
-  RemoveNode(aNode) 
-  {
-    if (aNode == this.mHead)
-    {
+  RemoveNode(aNode) {
+    if (aNode == this.mHead) {
       let next = aNode.mNext;
       if (next)
         next.mPrev = null;
       aNode.mNext = null;
       this.mHead = next;
     }
-    else if (aNode == this.mTail)  
-    {
+    else if (aNode == this.mTail) {
       let prev = aNode.mPrev;
       if (prev)
         prev.mNext = null;
       aNode.mPrev = null;
-      this.mTail = prev;   
+      this.mTail = prev;
     }
-    else 
-    {
+    else {
       let prev = aNode.mPrev;
       prev.mNext = aNode.mNext;
       aNode.mNext.mPrev = prev;
@@ -158,23 +138,20 @@ class LinkedList {
       aNode.mPrev = null;
     }
 
-    this.mSize --;
+    this.mSize--;
   }
 
-  RemoveNodeAt(aIndex) 
-  {
+  RemoveNodeAt(aIndex) {
     let node = this.GetNodeAt(aIndex);
     if (node)
       this.RemoveNode(node);
     return node;
   }
 
-  PrintList() 
-  {
+  PrintList() {
     console.log();
     let node = this.mHead;
-    while (node)
-    {
+    while (node) {
       console.log(JSON.stringify(node.mValue));
       node = node.mNext;
     }
@@ -183,8 +160,7 @@ class LinkedList {
   ToString() {
     let node = this.mHead;
     let str = "";
-    while (node)
-    {
+    while (node) {
       if (str.length > 0)
         str += " ";
       str += node.mValue;
@@ -194,33 +170,28 @@ class LinkedList {
     return str;
   }
 
-  VisitList(aFunction, aTotal) 
-  {
+  VisitList(aFunction, aTotal) {
     let node = this.mHead;
-    while (node)
-    {
+    while (node) {
       aTotal += aFunction(node, aTotal);
       node = node.mNext;
     }
   }
 
-  VisitList2(aFunction) 
-  {
+  VisitList2(aFunction) {
     let node = this.mHead;
     let index = 0;
-    while (node)
-    {
+    while (node) {
       aFunction(node.mValue, index);
       node = node.mNext;
-      index ++;
+      index++;
     }
   }
 
   ToStringReverse() {
     let node = this.mTail;
     let str = "";
-    while (node)
-    {
+    while (node) {
       if (str.length > 0)
         str += " ";
       str += node.mValue;
@@ -231,30 +202,18 @@ class LinkedList {
   }
 
   SplitList(aNode, aCount) {
-    /*if ((aNode == this.mHead) || 
-        (aNode == this.mTail))
-    {
-      let value = aNode.mValue;
-      this.RemoveNode(aNode);
-      let newList = new LinkedList();
-      newList.AddTail(value);
-      return newList;
-    }
-    else
-    {*/
-      let newList = new LinkedList();
-      newList.mHead = this.mHead;
-      newList.mHead.mPrev = null;
-      newList.mTail = aNode.mPrev;
-      newList.mTail.mNext = null;
-      newList.mSize = aCount;
+    let newList = new LinkedList();
+    newList.mHead = this.mHead;
+    newList.mHead.mPrev = null;
+    newList.mTail = aNode.mPrev;
+    newList.mTail.mNext = null;
+    newList.mSize = aCount;
 
-      this.mHead = aNode;
-      this.mHead.mPrev = null;
-      this.mSize -= aCount;
+    this.mHead = aNode;
+    this.mHead.mPrev = null;
+    this.mSize -= aCount;
 
-      return newList;
-    //}    
+    return newList;
   }
 
   SplitListAt(aIndex) {
@@ -264,15 +223,13 @@ class LinkedList {
     return null;
   }
 
-  AppendList(aList) 
-  {
+  AppendList(aList) {
     if (this.mTail == null) {
       this.mTail = aList.mTail;
       this.mHead = aList.mHead;
       this.mSize = aList.mSize;
     }
-    else 
-    {
+    else {
       this.mTail.mNext = aList.mHead;
       aList.mHead.mPrev = this.mTail;
       this.mTail = aList.mTail;
@@ -280,19 +237,17 @@ class LinkedList {
     }
   }
 
-  PrependList(aList) 
-  {
+  PrependList(aList) {
     if (this.mTail == null) {
       this.mTail = aList.mTail;
       this.mHead = aList.mHead;
       this.mSize = aList.mSize;
     }
-    else 
-    {
-      this.mHead.mPrev = aList.mTail; 
+    else {
+      this.mHead.mPrev = aList.mTail;
       aList.mTail.mNext = this.mHead;
       this.mHead = aList.mHead;
-      this.mSize += aList.mSize; 
+      this.mSize += aList.mSize;
     }
   }
 
@@ -305,21 +260,19 @@ class LinkedList {
 
     let pos = 0;
     let index = 0;
-    while (this.mSize > 0)
-    {
+    while (this.mSize > 0) {
       let value = aReverse ? this.mTail.mValue : this.mHead.mValue;
       this.RemoveNode(aReverse ? this.mTail : this.mHead);
 
       if (index >= newList.GetSize())
         newList.AddTail(value);
-      else
-      {
+      else {
         let node = newList.GetNodeAt(index);
         node.mValue = value;
       }
 
       pos += aIncrement;
-      index = (pos % size); 
+      index = (pos % size);
     }
 
     this.mHead = newList.mHead;

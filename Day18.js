@@ -293,10 +293,13 @@ function ComputeLee(aMap, aStart, aStageKeys, aAllKeys) {
   return costMap;
 }
 
-function GetAccessibleKeys(aCostMap, aAllKeys, aKey) {
+function GetAccessibleKeys(aCostMap, aAllKeys, aKey, aStageKeys) {
   let accessibleKeys = [];
   for (let i = 0; i < aAllKeys.length; i++) {
     if (aKey == aAllKeys[i].key)
+      continue;
+
+    if ((aStageKeys != undefined) && (aStageKeys.indexOf(aAllKeys[i].key) != -1))
       continue;
 
     let keyCost = GetCost(aCostMap, aAllKeys[i].pos);
@@ -590,7 +593,7 @@ function ComapareStages(aMap, aAllKeys, aAllDoors) {
 
   let stageMins = [];
   for (let i = 0; i < allStagePaths.length; i++) {
-    let min = Number.MAX_SAFE_INTEGER;
+    let min = Number.MAX_SAFE_INTEGER; 
     let path = "";
 
     for (let stage in allStagePaths[i]) {
@@ -615,14 +618,26 @@ function ComapareStages(aMap, aAllKeys, aAllDoors) {
   //console.log(min.path + ": " + min.cost);
 }
 
-function GetNeighbours(aMap, aKey, aPos, aAllKeys, aAllDoors, aStageKeys) {
+function GetNeighbours(aMap, aKey, aPos, aAllKeys, aAllDoors, aStageKeys, aCache) {
+
+  let cacheKey = aKey + "_" + aStageKeys;
+  if (aCache[cacheKey] != undefined) 
+  {
+    //console.log("Found Neighbours in cache!");
+    return aCache[cacheKey];
+  }
+
   let map = util.CopyObject(aMap);
 
   UnlockDoors(map, aAllDoors, aStageKeys);
 
   let costMap = ComputeLee(map, aPos, aStageKeys, aAllKeys);
 
-  accessibleKeys = GetAccessibleKeys(costMap, aAllKeys, aKey);
+  accessibleKeys = GetAccessibleKeys(costMap, aAllKeys, aKey, aStageKeys);
+
+  //accessibleKeys.sort(SortByCost);
+
+  aCache[cacheKey] = accessibleKeys;
 
   return accessibleKeys;
 }
@@ -778,53 +793,88 @@ function Sort123(aState, aElem1, aElem2) {
     return 0;
 }
 
+function AppendKey(aKeys, aKey) {
+  let k = aKeys.split('');
+  k.push(aKey);
+  k.sort();
+
+  let s = "";
+  for (let i = 0; i < k.length; i++)
+    s += k[i];
+  return s;
+}
+
 function BFS(aMap, aAllKeys, aAllDoors) {
   let costMap = ComputeMinTwoKeyCost(aMap, aAllDoors, aAllKeys);
-  let start = FindStart(aMap);
 
-  let queue = new alg.PriorityQueue({ key: '@', keys: "", cost: 0 });
+  console.log(costMap.min + " " + costMap.max);
+
+  let start = FindStart(aMap);
+  let neighboursCache = [];
+
+  let queue = new alg.PriorityQueue({ key: '@', keys: "", cost: 0, path: "" });
 
   let minCost = Number.MAX_SAFE_INTEGER;
-  let minPath = "";
+
+  let cache = [];
+
   while (!queue.IsEmpty()) {
     let currentNode = queue.Pop();
 
-    //console.log(currentNode.keys + " " + currentNode.cost);
+    //console.log(currentNode.key + " " + currentNode.keys + " " + currentNode.cost);
     //console.log(queue.mQueue.length);
 
+    let tt = currentNode.key + "_" + currentNode.keys;
+    let currentNodeCost = 0;
+    let currentNodePath = "@";
+    if (cache[tt] != undefined) {
+      currentNodeCost = cache[tt].cost;
+      currentNodePath = cache[tt].path;
+    }
+
     if (currentNode.keys.length == aAllKeys.length) {
-      endNode = currentNode.key;
+      console.log(currentNodePath + " " + currentNodeCost);
+      //break;
     }
 
     let pos = (currentNode.key == '@') ? start : GetKeyPos(aAllKeys, currentNode.key);
-    let neighbours = GetNeighbours(aMap, currentNode.key, pos, aAllKeys, aAllDoors, currentNode.keys);
+    let neighbours = GetNeighbours(aMap, currentNode.key, pos, aAllKeys, aAllDoors, currentNode.keys, neighboursCache);
 
     for (let i = 0; i < neighbours.length; i++) {
       let neighbour = neighbours[i];
 
-      let keys = currentNode.keys;
-      if (keys.indexOf(neighbour.key) != -1)
-        continue;
+      let keys = AppendKey(currentNode.keys, neighbour.key);
 
-      keys += neighbour.key;
+      let cost = currentNodeCost + neighbour.cost;
+      let path = currentNodePath + neighbour.key;
 
-      let cost = currentNode.cost + neighbour.cost;
-
-      let minCostEstimate = cost + (aAllKeys.length - keys.length) * (costMap.min + costMap.max) / 2 + costMap.min;
+      let minCostEstimate = cost + (aAllKeys.length - keys.length) * costMap.min;
       let maxCostEstimate = cost + (aAllKeys.length - keys.length) * costMap.max;
 
-      if (minCostEstimate >= minCost)
-        continue;
-
       if (maxCostEstimate < minCost) {
-        minPath = keys;
         minCost = maxCostEstimate;
-        console.log(keys + "-->" + minCost);
+        console.log(path + "-->" + minCost);
       }
 
-      let newNode = { key: neighbour.key, keys: keys, cost: cost }
+      let tt = neighbour.key + "_" + keys;
+      if (cache[tt] != undefined) {
+        if (cost < cache[tt].cost)
+        {
+          cache[tt].cost = cost;
+          cache[tt].path = path;
+        }
+        //console.log("Found in cache!" + tt + " " + cache[tt] + " " + cost);
+        continue;
+      }
+
+      //if (minCostEstimate >= minCost)
+      //  continue;
+
+      let newNode = { key: neighbour.key, keys: keys }
 
       queue.Push(newNode);
+      let vv = neighbour.key + "_" + keys;
+      cache[vv] =  { cost: cost, path: path };
     }
   }
 }
@@ -859,7 +909,7 @@ function GetFromCache(aCache, aAllKeys, aKeys) {
   return null;
 }
 
-var map = util.MapInput("./Day18TestInput3.txt", ParseMap, "\r\n");
+var map = util.MapInput("./Day18Input.txt", ParseMap, "\r\n");
 
 PrintMap(map);
 
@@ -867,9 +917,10 @@ var allKeys = GetAllKeys(map);
 var allDoors = GetAllDoors(map);
 
 console.log(allKeys.length);
+console.log(allDoors.length);
 
 //GetNeighbours44(map, '', null, allKeys, allDoors, "");
 
-FindPath3(map, allKeys, allDoors);
+//FindPath3(map, allKeys, allDoors);
 
-//BFS(map, allKeys, allDoors);
+BFS(map, allKeys, allDoors);

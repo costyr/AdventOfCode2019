@@ -830,10 +830,12 @@ function BFS(aMap, aAllKeys, aAllDoors) {
     if (cache[tt] != undefined) {
       currentNodeCost = cache[tt].cost;
       currentNodePath = cache[tt].path;
+
+      delete cache[tt];
     }
 
     if (currentNode.keys.length == aAllKeys.length) {
-      console.log(currentNodePath + " " + currentNodeCost);
+      //console.log(currentNodePath + " " + currentNodeCost);
       //break;
     }
 
@@ -867,8 +869,8 @@ function BFS(aMap, aAllKeys, aAllDoors) {
         continue;
       }
 
-      //if (minCostEstimate >= minCost)
-      //  continue;
+      if (minCostEstimate >= minCost)
+        continue;
 
       let newNode = { key: neighbour.key, keys: keys }
 
@@ -876,6 +878,12 @@ function BFS(aMap, aAllKeys, aAllDoors) {
       let vv = neighbour.key + "_" + keys;
       cache[vv] =  { cost: cost, path: path };
     }
+  }
+
+  for (let p in cache)
+  {
+    if ((p.length - 2) == aAllKeys.length)
+      console.log(cache[p].path + " " + cache[p].cost);
   }
 }
 

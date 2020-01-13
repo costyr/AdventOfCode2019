@@ -246,6 +246,7 @@ function GetCost(aCostMap, aPos) {
 function SetCost(aCostMap, aPos, aCost) {
   if (aCostMap[aPos.y] == undefined)
     aCostMap[aPos.y] = [];
+
   aCostMap[aPos.y][aPos.x] = aCost;
 }
 
@@ -271,10 +272,9 @@ function ComputeLee(aMap, aStart, aStageKeys, aAllKeys) {
 
     let directions = FindValidDirections(aMap, pos);
     for (let i = 0; i < directions.length; i++) {
-      if (GetCost(costMap, directions[i]) >= 0)
-        continue;
+      let neighbourCost = GetCost(costMap, directions[i])
 
-      SetCost(costMap, directions[i], cost + 1);
+      let newCost = cost + 1;
 
       if (aStageKeys.length > 0) {
         for (let j = 0; j < targetPoints.length; j++)
@@ -286,7 +286,10 @@ function ComputeLee(aMap, aStart, aStageKeys, aAllKeys) {
           break;
       }
 
-      stack.push(directions[i]);
+      if ((neighbourCost == -1) || (newCost < neighbourCost)) {
+        SetCost(costMap, directions[i], newCost);
+        stack.push(directions[i]);
+      }
     }
   }
 
@@ -370,7 +373,7 @@ function FindAccessible(aMap, aGraph, aKey, aPos, aAllKeys, aAllDoors, aStageKey
 
     UnlockDoors(map, aAllDoors, aStageKeys);
 
-    let costMap = ComputeLee(map, aPos, aStageKeys, aAllKeys);
+    let costMap = ComputeLee(map, aPos, "", aAllKeys);
 
     accessibleKeys = GetAccessibleKeys(costMap, aAllKeys, aKey, aStageKeys);
   }
@@ -623,7 +626,7 @@ function GetNeighbours(aMap, aKey, aAllKeys, aAllDoors, aStageKeys, aCache) {
   let cacheKey = aKey + "_" + aStageKeys;
   if (aCache[cacheKey] != undefined) 
   {
-    //console.log("Found Neighbours in cache!");
+    console.log("Found Neighbours in cache!");
     return aCache[cacheKey];
   }
 
@@ -853,10 +856,10 @@ function BFS(aMap, aAllKeys, aAllDoors) {
 
       let remainingKeys = (aAllKeys.length - keys.length);
 
-      if (remainingKeys == 0)
-      {
-        console.log(queue.mQueue.length + " " + remainingKeys + " " + path + "-->" + cost);
-      }
+      //if (remainingKeys == 0)
+     // {
+     //   console.log(queue.mQueue.length + " " + remainingKeys + " " + path + "-->" + cost);
+     // }
 
       let minCostEstimate = cost + remainingKeys * costMap.min;
       let maxCostEstimate = cost + remainingKeys * costMap.max;
@@ -872,17 +875,14 @@ function BFS(aMap, aAllKeys, aAllDoors) {
         {
           cache[hashKey].cost = cost;
           cache[hashKey].path = path;
-          continue;
         }
-        else if (cost > cache[hashKey].cost)
-        //console.log("Found in cache!" + tt + " " + cache[tt] + " " + cost);
         continue;
       }
       else
         cache[hashKey] =  { cost: cost, path: path };
 
-      //if (minCostEstimate > minCost)
-      //  continue;
+      if (minCostEstimate > minCost)
+        continue;
 
       let newNode = { key: neighbour.key, keys: keys }
 
@@ -927,7 +927,57 @@ function GetFromCache(aCache, aAllKeys, aKeys) {
   return null;
 }
 
-var map = util.MapInput("./Day18TestInput3.txt", ParseMap, "\r\n");
+function ComputePathCost(aMap, aAllKeys, aAllDoors, aPath) {
+
+  let map = util.CopyObject(aMap);
+
+  let allKeys = "";
+  for (let i = 0; i < aAllKeys.length; i++)
+    allKeys += aAllKeys[i].key;
+
+  UnlockDoors(map, aAllDoors, allKeys);
+
+  let startPos = FindStart(aMap);
+  let costMapStart = ComputeLee(map, startPos, "", aAllKeys);
+
+  let costMap = ComputeMinTwoKeyCost(aMap, aAllDoors, aAllKeys);
+
+  let totalCost = 0;
+  for (let i = 0; i < (aPath.length - 1); i++)
+  {
+    let key = aPath[i];
+    let nextKey = aPath[i + 1];
+    let cost = 0;
+
+    if (key == '@')
+    {
+      let pos = GetKeyPos(aAllKeys, nextKey);
+
+      
+      cost = costMapStart[pos.y][pos.x];
+    }
+    else 
+    {
+      let pos = GetKeyPos(aAllKeys, key);
+
+      let neighbours = costMap.map[pos.y][pos.x];
+
+      for (let j = 0; j < neighbours.length; j++)
+        if (neighbours[j].key == nextKey) 
+        {
+          cost = neighbours[j].cost;
+          break;
+        }
+    }
+
+    totalCost += cost;
+    console.log(key  + "-->" + nextKey + ": " + cost);
+  }
+
+  return totalCost;
+}
+
+var map = util.MapInput("./Day18Input.txt", ParseMap, "\r\n");
 
 PrintMap(map);
 
@@ -940,5 +990,8 @@ console.log(allDoors.length);
 //GetNeighbours44(map, '', null, allKeys, allDoors, "");
 
 //FindPath3(map, allKeys, allDoors);
+//@omethqalgyxziujwdrfpnvbkcs
+//@omqkczayxlgethiujdwrfvpnbs
+//console.log(ComputePathCost(map, allKeys, allDoors, "@omqkczayxlgethiujdwrfvpnbs"));
 
 BFS(map, allKeys, allDoors);

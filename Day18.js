@@ -34,11 +34,12 @@ function GetAllKeys(aMap) {
 }
 
 function FindStart(aMap) {
+  let starts = [];
   for (let i = 0; i < aMap.length; i++)
     for (let j = 0; j < aMap[i].length; j++)
       if (aMap[i][j] == '@')
-        return { x: j, y: i };
-  return null;
+        starts.push({ x: j, y: i });
+  return starts;
 }
 
 function SetDirections(aMap, aX, aY, aDirections) {
@@ -118,7 +119,7 @@ function FoundAllKeys(aKeys, aAllKeys) {
 }
 
 function FindPath(aMap, aStateMap, aAllKeys, aAllDoors) {
-  let start = FindStart(aMap);
+  let start = FindStart(aMap)[0];
   let path = [start];
   let keys = "";
   let stack = [start];
@@ -437,7 +438,7 @@ function FindPath2(aMap, aStartKey, aStartPos, aAllKeys, aAllDoors, aStageKeys) 
 }
 
 function FindPath3(aMap, aAllKeys, aAllDoors) {
-  let startPos = FindStart(aMap);
+  let startPos = FindStart(aMap)[0];
   FindPath2(aMap, '@', startPos, aAllKeys, aAllDoors, "");
 }
 
@@ -504,7 +505,7 @@ function FindDeps(aMap, aPos, aKey, aAllKeys, aAllDoors, aStageKeys) {
 }
 
 function FindAllDeps(aMap, aAllKeys, aAllDoors) {
-  let startPos = FindStart(aMap);
+  let startPos = FindStart(aMap)[0];
   let startKey = "@";
 
   let stageKeys = "";
@@ -621,7 +622,7 @@ function ComapareStages(aMap, aAllKeys, aAllDoors) {
   //console.log(min.path + ": " + min.cost);
 }
 
-function GetNeighbours(aMap, aKey, aAllKeys, aAllDoors, aStageKeys, aCache) {
+function GetNeighbours(aMap, aKey, aStartPos, aAllKeys, aAllDoors, aStageKeys, aCache) {
 
   let cacheKey = aKey + "_" + aStageKeys;
   if (aCache[cacheKey] != undefined) 
@@ -634,7 +635,7 @@ function GetNeighbours(aMap, aKey, aAllKeys, aAllDoors, aStageKeys, aCache) {
 
   UnlockDoors(map, aAllDoors, aStageKeys);
 
-  let pos = (aKey == '@') ? FindStart(aMap) : GetKeyPos(aAllKeys, aKey);
+  let pos = (aKey == '@') ? aStartPos : GetKeyPos(aAllKeys, aKey);
 
   let costMap = ComputeLee(map, pos, "", aAllKeys);
 
@@ -693,7 +694,7 @@ function ComputeAllDeps(aMap, aAllKeys, aAllDoors) {
 
 function ComputeAllDeps22(aMap, aAllKeys, aAllDoors) {
   let map = util.CopyObject(aMap);
-  let start = FindStart(aMap);
+  let start = FindStart(aMap)[0];
 
   let depsMap = [];
   let keys = "";
@@ -809,20 +810,24 @@ function AppendKey(aKeys, aKey) {
   return s;
 }
 
-function BFS(aMap, aAllKeys, aAllDoors) {
+function BFS(aMap, aStartPos, aStartKey, aStartKeys, aStartPath, aStartCost, aAllKeys, aAllDoors) {
   let costMap = ComputeMinTwoKeyCost(aMap, aAllDoors, aAllKeys);
 
-  console.log(costMap.min + " " + costMap.max);
+  //console.log(costMap.min + " " + costMap.max);
 
   let neighboursCache = [];
 
-  let queue = new alg.PriorityQueue({ key: '@', keys: "" });
+  let queue = new alg.PriorityQueue({ key: aStartKey, keys: aStartKeys });
 
   let minCost = Number.MAX_SAFE_INTEGER;
 
   let cache = [];
-  cache["@_"] = {cost: 0, path: "@"};
+  cache[aStartKey + "_" + aStartKeys] = { cost: aStartCost, path: aStartPath };
 
+  let currentNodeCost = aStartCost;
+  let currentNodePath = aStartPath;
+  let currentNodeKeys = aStartKeys;
+  let currentNodeKey = aStartKey;
   while (!queue.IsEmpty()) {
     let currentNode = queue.Pop();
 
@@ -830,8 +835,8 @@ function BFS(aMap, aAllKeys, aAllDoors) {
     //console.log(queue.mQueue.length);
 
     let hashKey = currentNode.key + "_" + currentNode.keys;
-    let currentNodeCost = 0;
-    let currentNodePath = "@";
+    currentNodeKeys = currentNode.keys;
+    currentNodeKey = currentNode.key;
     if (cache[hashKey] != undefined) {
       currentNodeCost = cache[hashKey].cost;
       currentNodePath = cache[hashKey].path;
@@ -839,12 +844,7 @@ function BFS(aMap, aAllKeys, aAllDoors) {
       delete cache[hashKey];
     }
 
-    if (currentNode.keys.length == aAllKeys.length) {
-      //console.log(currentNodePath + " " + currentNodeCost);
-      //break;
-    }
-
-    let neighbours = GetNeighbours(aMap, currentNode.key, aAllKeys, aAllDoors, currentNode.keys, neighboursCache);
+    let neighbours = GetNeighbours(aMap, currentNode.key, aStartPos, aAllKeys, aAllDoors, currentNode.keys, neighboursCache);
 
     for (let i = 0; i < neighbours.length; i++) {
       let neighbour = neighbours[i];
@@ -866,7 +866,7 @@ function BFS(aMap, aAllKeys, aAllDoors) {
 
       if (maxCostEstimate < minCost) {
         minCost = maxCostEstimate;
-        console.log(queue.mQueue.length + " " + remainingKeys + " " + path + "-->" + minCost);
+        //console.log(queue.mQueue.length + " " + remainingKeys + " " + path + "-->" + minCost);
       }
 
       hashKey = neighbour.key + "_" + keys;
@@ -881,8 +881,8 @@ function BFS(aMap, aAllKeys, aAllDoors) {
       else
         cache[hashKey] =  { cost: cost, path: path };
 
-      if (minCostEstimate > minCost)
-        continue;
+      //if (minCostEstimate > minCost)
+      //  continue;
 
       let newNode = { key: neighbour.key, keys: keys }
 
@@ -890,11 +890,9 @@ function BFS(aMap, aAllKeys, aAllDoors) {
     }
   }
 
-  for (let p in cache)
-  {
-    if ((p.length - 2) == aAllKeys.length)
-      console.log(cache[p].path + " " + cache[p].cost);
-  }
+  console.log(currentNodePath + " " + currentNodeCost + " " + currentNodeKeys);
+
+  return { key: currentNodeKey, keys: currentNodeKeys, path: currentNodePath, cost: currentNodeCost };
 }
 
 function ComputeOposite(aAllKeys, aKeys) {
@@ -937,7 +935,7 @@ function ComputePathCost(aMap, aAllKeys, aAllDoors, aPath) {
 
   UnlockDoors(map, aAllDoors, allKeys);
 
-  let startPos = FindStart(aMap);
+  let startPos = FindStart(aMap)[0];
   let costMapStart = ComputeLee(map, startPos, "", aAllKeys);
 
   let costMap = ComputeMinTwoKeyCost(aMap, aAllDoors, aAllKeys);
@@ -977,7 +975,72 @@ function ComputePathCost(aMap, aAllKeys, aAllDoors, aPath) {
   return totalCost;
 }
 
-var map = util.MapInput("./Day18Input.txt", ParseMap, "\r\n");
+function OpenDoors(aMap, aAllKeys, aAllDoors, aStarts) {
+  
+  for (let i = 0; i < aAllKeys.length; i++)
+  {
+    let keyPos = aAllKeys[i].pos;
+    let doorPos;
+    for (let j = 0; j < aAllDoors.length; j++)
+      if (aAllDoors[j].key.toLowerCase() == aAllKeys[i].key)
+        doorPos = aAllDoors[j].pos;
+
+    for (let k = 0; k < aStarts.length; k++)
+    {
+
+    }
+  }
+}
+
+function BFSMulti(aMap, aAllKeys, aAllDoors) {
+  let map = util.CopyObject(aMap);
+  let starts = FindStart(aMap);
+
+  let robotState = [];
+  for (let i = 0; i < starts.length; i++)
+    robotState.push({ startPos: starts[i], key: '@', keys: "", path: "@", cost: 0 });
+
+  let keysFound = "";
+
+  while (keysFound.length < aAllKeys.length)
+  {
+    for (let i = 0; i < robotState.length; i++)
+    {
+      let state = robotState[i];
+      let ret = BFS(map, state.startPos, state.key, state.keys, state.path, state.cost, aAllKeys, aAllDoors);
+
+      let foundNewKeys = false;
+      for (let j = 0; j < ret.keys.length; j++)
+      {
+        let key = ret.keys[j];
+        if (keysFound.indexOf(key) == -1) 
+        {
+          keysFound += key;
+          foundNewKeys = true;
+        }
+      }
+
+      if (foundNewKeys)
+        UnlockDoors(map, aAllDoors, keysFound);
+
+      state.key = ret.key;
+      state.keys = ret.keys;
+      state.path = ret.path;
+      state.cost = ret.cost;
+    }
+  }
+
+  let totalCost = 0;
+  for (let i = 0; i < robotState.length; i++) 
+  {
+    console.log(JSON.stringify(robotState[i]));
+    totalCost += robotState[i].cost;
+  }
+
+  return totalCost;
+}
+
+var map = util.MapInput("./Day18TestInput7.txt", ParseMap, "\r\n");
 
 PrintMap(map);
 
@@ -994,4 +1057,7 @@ console.log(allDoors.length);
 //@omqkczayxlgethiujdwrfvpnbs
 //console.log(ComputePathCost(map, allKeys, allDoors, "@omqkczayxlgethiujdwrfvpnbs"));
 
-BFS(map, allKeys, allDoors);
+//let startPos = FindStart(map)[0];
+//BFS(map, startPos, '@', "", "@", 0, allKeys, allDoors);
+
+console.log(BFSMulti(map, allKeys, allDoors));

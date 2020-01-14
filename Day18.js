@@ -976,60 +976,29 @@ function ComputePathCost(aMap, aAllKeys, aAllDoors, aPath) {
 }
 
 function OpenDoors(aAllKeys, aAllDoors, aStarts) {
-  let visited = [];
+  let visited = ["", "", "", ""];
   for (let i = 0; i < aAllKeys.length; i++)
   {
     let keyPos = aAllKeys[i].pos;
-    let doorPos = null;
-    for (let j = 0; j < aAllDoors.length; j++)
-      if (aAllDoors[j].door.toLowerCase() == aAllKeys[i].key)
-        doorPos = aAllDoors[j].pos;
-
-    if (doorPos == null)
-      continue;
     
-    if ((keyPos.x < aStarts[0].x) && (keyPos.y < aStarts[0].y))
+    if (!((keyPos.x <= aStarts[0].x) && (keyPos.y <= aStarts[0].y)))
     {
-      if ((doorPos.x > aStarts[0].x) || (doorPos.y > aStarts[0].y))
-      {
-        if (visited[0] == undefined)
-          visited[0] = "";
-
-        visited[0] += aAllKeys[i].key;
-      }
+      visited[0] += aAllKeys[i].key;
     }
 
-    if ((keyPos.x > aStarts[1].x) && (keyPos.y < aStarts[1].y))
+    if (!((keyPos.x >= aStarts[1].x) && (keyPos.y <= aStarts[1].y)))
     {
-      if ((doorPos.x < aStarts[1].x) || (doorPos.y > aStarts[1].y))
-      {
-        if (visited[1] == undefined)
-          visited[1] = "";
-
-        visited[1] += aAllKeys[i].key;
-      }
+      visited[1] += aAllKeys[i].key;
     }
 
-    if ((keyPos.x < aStarts[2].x) && (keyPos.y > aStarts[2].y))
+    if (!((keyPos.x <= aStarts[2].x) && (keyPos.y >= aStarts[2].y)))
     {
-      if ((doorPos.x > aStarts[2].x) || (doorPos.y < aStarts[2].y))
-      {
-        if (visited[2] == undefined)
-          visited[2] = "";
-
-        visited[2] += aAllKeys[i].key;
-      }
+      visited[2] += aAllKeys[i].key;
     }
 
-    if ((keyPos.x > aStarts[3].x) && (keyPos.y > aStarts[3].y))
+    if (!((keyPos.x >= aStarts[3].x) && (keyPos.y >= aStarts[3].y)))
     {
-      if ((doorPos.x < aStarts[3].x) || (doorPos.y < aStarts[3].y))
-      {
-        if (visited[3] == undefined)
-          visited[3] = "";
-
-        visited[3] += aAllKeys[i].key;
-      }
+      visited[3] += aAllKeys[i].key;
     }
        
   }
@@ -1040,47 +1009,20 @@ function OpenDoors(aAllKeys, aAllDoors, aStarts) {
 function BFSMulti(aMap, aAllKeys, aAllDoors) {
   let map = util.CopyObject(aMap);
   let starts = FindStart(aMap);
+  let visited = OpenDoors(aAllKeys, aAllDoors, starts);
 
   let robotState = [];
   for (let i = 0; i < starts.length; i++)
-    robotState.push({ startPos: starts[i], key: '@', keys: "", path: "@", cost: 0 });
+    robotState.push({ startPos: starts[i], key: '@', keys: visited[i], path: "@", cost: 0 });
 
-  let keysFound = "";
-
-  while (keysFound.length < aAllKeys.length)
-  {
+    let totalCost = 0;
     for (let i = 0; i < robotState.length; i++)
     {
       let state = robotState[i];
       let ret = BFS(map, state.startPos, state.key, state.keys, state.path, state.cost, aAllKeys, aAllDoors);
 
-      let foundNewKeys = false;
-      for (let j = 0; j < ret.keys.length; j++)
-      {
-        let key = ret.keys[j];
-        if (keysFound.indexOf(key) == -1) 
-        {
-          keysFound += key;
-          foundNewKeys = true;
-        }
-      }
-
-      if (foundNewKeys)
-        UnlockDoors(map, aAllDoors, keysFound);
-
-      state.key = ret.key;
-      state.keys = ret.keys;
-      state.path = ret.path;
-      state.cost = ret.cost;
+      totalCost += ret.cost;
     }
-  }
-
-  let totalCost = 0;
-  for (let i = 0; i < robotState.length; i++) 
-  {
-    console.log(JSON.stringify(robotState[i]));
-    totalCost += robotState[i].cost;
-  }
 
   return totalCost;
 }

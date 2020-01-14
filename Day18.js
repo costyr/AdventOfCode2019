@@ -975,21 +975,66 @@ function ComputePathCost(aMap, aAllKeys, aAllDoors, aPath) {
   return totalCost;
 }
 
-function OpenDoors(aMap, aAllKeys, aAllDoors, aStarts) {
-  
+function OpenDoors(aAllKeys, aAllDoors, aStarts) {
+  let visited = [];
   for (let i = 0; i < aAllKeys.length; i++)
   {
     let keyPos = aAllKeys[i].pos;
-    let doorPos;
+    let doorPos = null;
     for (let j = 0; j < aAllDoors.length; j++)
-      if (aAllDoors[j].key.toLowerCase() == aAllKeys[i].key)
+      if (aAllDoors[j].door.toLowerCase() == aAllKeys[i].key)
         doorPos = aAllDoors[j].pos;
 
-    for (let k = 0; k < aStarts.length; k++)
+    if (doorPos == null)
+      continue;
+    
+    if ((keyPos.x < aStarts[0].x) && (keyPos.y < aStarts[0].y))
     {
+      if ((doorPos.x > aStarts[0].x) || (doorPos.y > aStarts[0].y))
+      {
+        if (visited[0] == undefined)
+          visited[0] = "";
 
+        visited[0] += aAllKeys[i].key;
+      }
     }
+
+    if ((keyPos.x > aStarts[1].x) && (keyPos.y < aStarts[1].y))
+    {
+      if ((doorPos.x < aStarts[1].x) || (doorPos.y > aStarts[1].y))
+      {
+        if (visited[1] == undefined)
+          visited[1] = "";
+
+        visited[1] += aAllKeys[i].key;
+      }
+    }
+
+    if ((keyPos.x < aStarts[2].x) && (keyPos.y > aStarts[2].y))
+    {
+      if ((doorPos.x > aStarts[2].x) || (doorPos.y < aStarts[2].y))
+      {
+        if (visited[2] == undefined)
+          visited[2] = "";
+
+        visited[2] += aAllKeys[i].key;
+      }
+    }
+
+    if ((keyPos.x > aStarts[3].x) && (keyPos.y > aStarts[3].y))
+    {
+      if ((doorPos.x < aStarts[3].x) || (doorPos.y < aStarts[3].y))
+      {
+        if (visited[3] == undefined)
+          visited[3] = "";
+
+        visited[3] += aAllKeys[i].key;
+      }
+    }
+       
   }
+
+  return visited;
 }
 
 function BFSMulti(aMap, aAllKeys, aAllDoors) {
@@ -1059,5 +1104,8 @@ console.log(allDoors.length);
 
 //let startPos = FindStart(map)[0];
 //BFS(map, startPos, '@', "", "@", 0, allKeys, allDoors);
+
+let starts = FindStart(map);
+console.log(JSON.stringify(OpenDoors(allKeys, allDoors, starts)));
 
 console.log(BFSMulti(map, allKeys, allDoors));

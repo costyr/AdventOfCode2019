@@ -8,7 +8,12 @@ function RenderOutput(aOutput) {
 
   let line = "";
   for (let i = 0; i < aOutput.length; i++)
-    line += String.fromCharCode(aOutput[i]);
+  {
+    if (aOutput[i] > 127)
+      line += aOutput[i].toString();
+    else
+      line += String.fromCharCode(aOutput[i]);
+  }
   return line;
 }
 
@@ -27,19 +32,13 @@ function ConvertScriptInstructionsToAscii(aInstructions) {
 var inst = util.MapInput('./Day21Input.txt', util.ParseInt, ',');
 
 let script = [ 
-  /*"NOT A J",
-  "NOT B T",
-  "AND T J",
-  "NOT C T",
-  "AND T J",
-  "AND D J",*/
   "NOT A J",
   "NOT B T",
   "OR T J",
   "NOT C T",
   "OR T J",
   "AND D J",
-  "WALK" ]; 
+  "RUN" ]; 
 
 var rawInput = ConvertScriptInstructionsToAscii(script);
 
@@ -50,9 +49,4 @@ var prog = new intcodeComputer.IntcodeProgram(inst, input, output);
 
 prog.Run();
 
-var rawOutput = output.Get();
-
 console.log(RenderOutput(output.Get()));
-
-if (rawOutput.length == 1)
-  console.log(rawOutput[0]);

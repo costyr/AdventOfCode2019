@@ -40,7 +40,46 @@ let script = [
   "AND D J",
   "RUN" ]; 
 
-var rawInput = ConvertScriptInstructionsToAscii(script);
+// (!A || !B || !C || !D || !E || !F || !G || !H) && I
+let script2 = [ 
+  "NOT A J",
+  "NOT B T",
+  "OR T J",
+  "NOT C T",
+  "OR T J",
+  "NOT D T",
+  "OR T J",
+  "NOT E T",
+  "OR T J",
+  "NOT F T",
+  "OR T J",
+  "NOT G T",
+  "OR T J",
+  "NOT H J",
+  "OR T J",
+  "AND I J",
+  "RUN" ]; 
+
+  let script3 = [ 
+    "NOT A J",
+    "AND I J",
+    "OR T J",
+    "NOT C T",
+    "OR T J",
+    "NOT D T",
+    "OR T J",
+    "NOT E T",
+    "OR T J",
+    "NOT F T",
+    "OR T J",
+    "NOT G T",
+    "OR T J",
+    "NOT H J",
+    "OR T J",
+    "AND I J",
+    "RUN" ]; 
+
+var rawInput = ConvertScriptInstructionsToAscii(script2);
 
 let input = new intcodeComputer.IntcodeIOStream(rawInput);
 let output = new intcodeComputer.IntcodeIOStream([]);

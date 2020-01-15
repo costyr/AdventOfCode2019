@@ -866,7 +866,7 @@ function BFS(aMap, aStartPos, aStartKey, aStartKeys, aStartPath, aStartCost, aAl
 
       if (maxCostEstimate < minCost) {
         minCost = maxCostEstimate;
-        //console.log(queue.mQueue.length + " " + remainingKeys + " " + path + "-->" + minCost);
+        console.log(queue.mQueue.length + " " + remainingKeys + " " + path + "-->" + minCost);
       }
 
       hashKey = neighbour.key + "_" + keys;
@@ -892,7 +892,7 @@ function BFS(aMap, aStartPos, aStartKey, aStartKeys, aStartPath, aStartCost, aAl
 
   console.log(currentNodePath + " " + currentNodeCost + " " + currentNodeKeys);
 
-  return { key: currentNodeKey, keys: currentNodeKeys, path: currentNodePath, cost: currentNodeCost };
+  return { key: currentNodeKey, keys: currentNodeKeys, path: currentNodePath, cost: minCost };
 }
 
 function ComputeOposite(aAllKeys, aKeys) {
@@ -951,7 +951,6 @@ function ComputePathCost(aMap, aAllKeys, aAllDoors, aPath) {
     {
       let pos = GetKeyPos(aAllKeys, nextKey);
 
-      
       cost = costMapStart[pos.y][pos.x];
     }
     else 
@@ -975,32 +974,48 @@ function ComputePathCost(aMap, aAllKeys, aAllDoors, aPath) {
   return totalCost;
 }
 
-function OpenDoors(aAllKeys, aAllDoors, aStarts) {
+function OpenDoors(aAllKeys, aStarts) {
   let visited = ["", "", "", ""];
+  let topLeft = aStarts[0];
+  let topRight = aStarts[1];
+  let bottomLeft = aStarts[2];
+  let bottomRight = aStarts[3];
   for (let i = 0; i < aAllKeys.length; i++)
   {
-    let keyPos = aAllKeys[i].pos;
+    let x = aAllKeys[i].pos.x;
+    let y = aAllKeys[i].pos.y;
     
-    if (!((keyPos.x <= aStarts[0].x) && (keyPos.y <= aStarts[0].y)))
+    if (!((x <= topLeft.x) && (y <= topLeft.y)))
     {
       visited[0] += aAllKeys[i].key;
     }
-
-    if (!((keyPos.x >= aStarts[1].x) && (keyPos.y <= aStarts[1].y)))
+    
+    if (!((x >= topRight.x) && (y <= topRight.y)))
     {
       visited[1] += aAllKeys[i].key;
     }
 
-    if (!((keyPos.x <= aStarts[2].x) && (keyPos.y >= aStarts[2].y)))
+    if (!((x <= bottomLeft.x) && (y >= bottomLeft.y)))
     {
       visited[2] += aAllKeys[i].key;
     }
 
-    if (!((keyPos.x >= aStarts[3].x) && (keyPos.y >= aStarts[3].y)))
+    if (!((x >= bottomRight.x) && (y >= bottomRight.y)))
     {
       visited[3] += aAllKeys[i].key;
     }
-       
+  }
+
+  for (let i = 0; i < visited.length; i++)
+  {
+    let bb = visited[i].split("");
+    bb.sort();
+
+    let s = "";
+    for (let j = 0; j < bb.length; j++)
+      s += bb[j];
+
+    visited[i] = s;
   }
 
   return visited;
@@ -1009,7 +1024,7 @@ function OpenDoors(aAllKeys, aAllDoors, aStarts) {
 function BFSMulti(aMap, aAllKeys, aAllDoors) {
   let map = util.CopyObject(aMap);
   let starts = FindStart(aMap);
-  let visited = OpenDoors(aAllKeys, aAllDoors, starts);
+  let visited = OpenDoors(aAllKeys, starts);
 
   let robotState = [];
   for (let i = 0; i < starts.length; i++)
@@ -1018,6 +1033,7 @@ function BFSMulti(aMap, aAllKeys, aAllDoors) {
     let totalCost = 0;
     for (let i = 0; i < robotState.length; i++)
     {
+      console.log("-------------------------------");
       let state = robotState[i];
       let ret = BFS(map, state.startPos, state.key, state.keys, state.path, state.cost, aAllKeys, aAllDoors);
 
@@ -1027,7 +1043,56 @@ function BFSMulti(aMap, aAllKeys, aAllDoors) {
   return totalCost;
 }
 
-var map = util.MapInput("./Day18TestInput7.txt", ParseMap, "\r\n");
+function BFSMulti2(aMap, aAllKeys, aAllDoors) {
+  let map = util.CopyObject(aMap);
+  let starts = FindStart(aMap);
+
+  let robotState = [];
+  for (let i = 0; i < starts.length; i++)
+    robotState.push({ startPos: starts[i], key: '@', keys: "", path: "@", cost: 0 });
+
+  let keysFound = "";
+
+  while (keysFound.length < aAllKeys.length)
+  {
+    for (let i = 0; i < robotState.length; i++)
+    {
+      let state = robotState[i];
+      let ret = BFS(map, state.startPos, state.key, state.keys, state.path, state.cost, aAllKeys, aAllDoors);
+
+      let foundNewKeys = false;
+      for (let j = 0; j < ret.keys.length; j++)
+      {
+        let key = ret.keys[j];
+        if (keysFound.indexOf(key) == -1) 
+        {
+          keysFound += key;
+          foundNewKeys = true;
+        }
+      }
+
+      if (foundNewKeys) {
+        UnlockDoors(map, aAllDoors, keysFound);
+
+      state.key = ret.key;
+      state.keys = ret.keys;
+      state.path = ret.path;
+      state.cost = ret.cost;
+      }
+    }
+  }
+
+  let totalCost = 0;
+  for (let i = 0; i < robotState.length; i++) 
+  {
+    console.log(JSON.stringify(robotState[i]));
+    totalCost += robotState[i].cost;
+  }
+
+  return totalCost;
+}
+
+var map = util.MapInput("./Day18Input2.txt", ParseMap, "\r\n");
 
 PrintMap(map);
 
@@ -1042,12 +1107,13 @@ console.log(allDoors.length);
 //FindPath3(map, allKeys, allDoors);
 //@omethqalgyxziujwdrfpnvbkcs
 //@omqkczayxlgethiujdwrfvpnbs
-//console.log(ComputePathCost(map, allKeys, allDoors, "@omqkczayxlgethiujdwrfvpnbs"));
+//console.log(ComputePathCost(map, allKeys, allDoors, "dbefag"));
 
 //let startPos = FindStart(map)[0];
 //BFS(map, startPos, '@', "", "@", 0, allKeys, allDoors);
 
 let starts = FindStart(map);
-console.log(JSON.stringify(OpenDoors(allKeys, allDoors, starts)));
+console.log(JSON.stringify(starts));
+console.log(JSON.stringify(OpenDoors(allKeys, starts)));
 
-console.log(BFSMulti(map, allKeys, allDoors));
+console.log(BFSMulti2(map, allKeys, allDoors));

@@ -1,45 +1,47 @@
 const util = require('./Util.js');
 const intcodeComputer = require('./IntcodeComputer.js');
+const readlineSync = require('readline-sync');
 
-function RenderOutput(aOutput) {
-
-  if (aOutput.length == 1)
-    return;
-
-  let line = "";
-  for (let i = 0; i < aOutput.length; i++)
-  {
-    if (aOutput[i] > 127)
-      line += aOutput[i].toString();
-    else
-      line += String.fromCharCode(aOutput[i]);
-  }
-  return line;
-}
-
-function ConvertScriptInstructionsToAscii(aInstructions) {
-  let asciiBuffer = [];
-  for (let i = 0; i < aInstructions.length; i++)
-  {
-    for (let j = 0; j < aInstructions[i].length; j++)
-      asciiBuffer.push(aInstructions[i][j].charCodeAt(0));
-    asciiBuffer.push(10); 
+class ASCIIComputer {
+  constructor() {
+    this.mInputStreamPos = 0;
+    this.mInputStream = [];
   }
 
-  return asciiBuffer;
+  IsEndOfStream() {
+    return false;
+  }
+
+  Read() {
+
+    if (this.mInputStreamPos >= this.mInputStream.length) 
+    {
+      let line = readlineSync.question("");
+      this.ConvertToAscii(line);
+    }
+
+    let input = this.mInputStream[this.mInputStreamPos++];
+    return input;     
+  }
+
+  Write(aValue) {
+    process.stdout.write(String.fromCharCode(aValue));
+  }
+
+  ConvertToAscii(aInstruction) {
+    for (let i = 0; i < aInstruction.length; i++)
+    {
+      this.mInputStream.push(aInstruction[i].charCodeAt(0));
+    }
+
+    this.mInputStream.push(10);
+  }
 }
 
 var inst = util.MapInput('./Day25Input.txt', util.ParseInt, ',');
 
-let script = ["north", "south"]; 
+var comp = new ASCIIComputer();
 
-let rawInput = ConvertScriptInstructionsToAscii(script);
-
-let input = new intcodeComputer.IntcodeIOStream(rawInput);
-let output = new intcodeComputer.IntcodeIOStream([]);
-
-let prog = new intcodeComputer.IntcodeProgram(inst, input, output);
+let prog = new intcodeComputer.IntcodeProgram(inst, comp, comp);
 
 prog.Run();
-
-console.log(RenderOutput(output.Get()));

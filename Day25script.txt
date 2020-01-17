@@ -1,0 +1,674 @@
+north
+north
+take manifold
+north
+take hologram
+south
+south
+west
+take boulder
+east
+south
+west
+south
+take polygon
+north
+east
+south
+south
+take tambourine
+north
+north
+north
+north
+west
+take fuel cell
+south
+east
+south
+take fixed point
+north
+west
+north
+north
+take wreath
+east
+east
+drop manifold
+drop hologram
+drop boulder
+drop polygon
+drop tambourine
+drop fuel cell
+drop fixed point
+drop wreath
+take hologram
+take fuel cell
+take tambourine
+take fixed point
+north
+drop hologram
+drop fuel cell
+drop tambourine
+drop fixed point
+take hologram
+take fuel cell
+take tambourine
+take polygon
+north
+drop hologram
+drop fuel cell
+drop tambourine
+drop polygon
+take hologram
+take fuel cell
+take tambourine
+take boulder
+north
+drop hologram
+drop fuel cell
+drop tambourine
+drop boulder
+take hologram
+take fuel cell
+take tambourine
+take wreath
+north
+drop hologram
+drop fuel cell
+drop tambourine
+drop wreath
+take hologram
+take fuel cell
+take tambourine
+take manifold
+north
+drop hologram
+drop fuel cell
+drop tambourine
+drop manifold
+take hologram
+take fuel cell
+take fixed point
+take polygon
+north
+drop hologram
+drop fuel cell
+drop fixed point
+drop polygon
+take hologram
+take fuel cell
+take fixed point
+take boulder
+north
+drop hologram
+drop fuel cell
+drop fixed point
+drop boulder
+take hologram
+take fuel cell
+take fixed point
+take wreath
+north
+drop hologram
+drop fuel cell
+drop fixed point
+drop wreath
+take hologram
+take fuel cell
+take fixed point
+take manifold
+north
+drop hologram
+drop fuel cell
+drop fixed point
+drop manifold
+take hologram
+take fuel cell
+take polygon
+take boulder
+north
+drop hologram
+drop fuel cell
+drop polygon
+drop boulder
+take hologram
+take fuel cell
+take polygon
+take wreath
+north
+drop hologram
+drop fuel cell
+drop polygon
+drop wreath
+take hologram
+take fuel cell
+take polygon
+take manifold
+north
+drop hologram
+drop fuel cell
+drop polygon
+drop manifold
+take hologram
+take fuel cell
+take boulder
+take wreath
+north
+drop hologram
+drop fuel cell
+drop boulder
+drop wreath
+take hologram
+take fuel cell
+take boulder
+take manifold
+north
+drop hologram
+drop fuel cell
+drop boulder
+drop manifold
+take hologram
+take fuel cell
+take wreath
+take manifold
+north
+drop hologram
+drop fuel cell
+drop wreath
+drop manifold
+take hologram
+take tambourine
+take fixed point
+take polygon
+north
+drop hologram
+drop tambourine
+drop fixed point
+drop polygon
+take hologram
+take tambourine
+take fixed point
+take boulder
+north
+drop hologram
+drop tambourine
+drop fixed point
+drop boulder
+take hologram
+take tambourine
+take fixed point
+take wreath
+north
+drop hologram
+drop tambourine
+drop fixed point
+drop wreath
+take hologram
+take tambourine
+take fixed point
+take manifold
+north
+drop hologram
+drop tambourine
+drop fixed point
+drop manifold
+take hologram
+take tambourine
+take polygon
+take boulder
+north
+drop hologram
+drop tambourine
+drop polygon
+drop boulder
+take hologram
+take tambourine
+take polygon
+take wreath
+north
+drop hologram
+drop tambourine
+drop polygon
+drop wreath
+take hologram
+take tambourine
+take polygon
+take manifold
+north
+drop hologram
+drop tambourine
+drop polygon
+drop manifold
+take hologram
+take tambourine
+take boulder
+take wreath
+north
+drop hologram
+drop tambourine
+drop boulder
+drop wreath
+take hologram
+take tambourine
+take boulder
+take manifold
+north
+drop hologram
+drop tambourine
+drop boulder
+drop manifold
+take hologram
+take tambourine
+take wreath
+take manifold
+north
+drop hologram
+drop tambourine
+drop wreath
+drop manifold
+take hologram
+take fixed point
+take polygon
+take boulder
+north
+drop hologram
+drop fixed point
+drop polygon
+drop boulder
+take hologram
+take fixed point
+take polygon
+take wreath
+north
+drop hologram
+drop fixed point
+drop polygon
+drop wreath
+take hologram
+take fixed point
+take polygon
+take manifold
+north
+drop hologram
+drop fixed point
+drop polygon
+drop manifold
+take hologram
+take fixed point
+take boulder
+take wreath
+north
+drop hologram
+drop fixed point
+drop boulder
+drop wreath
+take hologram
+take fixed point
+take boulder
+take manifold
+north
+drop hologram
+drop fixed point
+drop boulder
+drop manifold
+take hologram
+take fixed point
+take wreath
+take manifold
+north
+drop hologram
+drop fixed point
+drop wreath
+drop manifold
+take hologram
+take polygon
+take boulder
+take wreath
+north
+drop hologram
+drop polygon
+drop boulder
+drop wreath
+take hologram
+take polygon
+take boulder
+take manifold
+north
+drop hologram
+drop polygon
+drop boulder
+drop manifold
+take hologram
+take polygon
+take wreath
+take manifold
+north
+drop hologram
+drop polygon
+drop wreath
+drop manifold
+take hologram
+take boulder
+take wreath
+take manifold
+north
+drop hologram
+drop boulder
+drop wreath
+drop manifold
+take fuel cell
+take tambourine
+take fixed point
+take polygon
+north
+drop fuel cell
+drop tambourine
+drop fixed point
+drop polygon
+take fuel cell
+take tambourine
+take fixed point
+take boulder
+north
+drop fuel cell
+drop tambourine
+drop fixed point
+drop boulder
+take fuel cell
+take tambourine
+take fixed point
+take wreath
+north
+drop fuel cell
+drop tambourine
+drop fixed point
+drop wreath
+take fuel cell
+take tambourine
+take fixed point
+take manifold
+north
+drop fuel cell
+drop tambourine
+drop fixed point
+drop manifold
+take fuel cell
+take tambourine
+take polygon
+take boulder
+north
+drop fuel cell
+drop tambourine
+drop polygon
+drop boulder
+take fuel cell
+take tambourine
+take polygon
+take wreath
+north
+drop fuel cell
+drop tambourine
+drop polygon
+drop wreath
+take fuel cell
+take tambourine
+take polygon
+take manifold
+north
+drop fuel cell
+drop tambourine
+drop polygon
+drop manifold
+take fuel cell
+take tambourine
+take boulder
+take wreath
+north
+drop fuel cell
+drop tambourine
+drop boulder
+drop wreath
+take fuel cell
+take tambourine
+take boulder
+take manifold
+north
+drop fuel cell
+drop tambourine
+drop boulder
+drop manifold
+take fuel cell
+take tambourine
+take wreath
+take manifold
+north
+drop fuel cell
+drop tambourine
+drop wreath
+drop manifold
+take fuel cell
+take fixed point
+take polygon
+take boulder
+north
+drop fuel cell
+drop fixed point
+drop polygon
+drop boulder
+take fuel cell
+take fixed point
+take polygon
+take wreath
+north
+drop fuel cell
+drop fixed point
+drop polygon
+drop wreath
+take fuel cell
+take fixed point
+take polygon
+take manifold
+north
+drop fuel cell
+drop fixed point
+drop polygon
+drop manifold
+take fuel cell
+take fixed point
+take boulder
+take wreath
+north
+drop fuel cell
+drop fixed point
+drop boulder
+drop wreath
+take fuel cell
+take fixed point
+take boulder
+take manifold
+north
+drop fuel cell
+drop fixed point
+drop boulder
+drop manifold
+take fuel cell
+take fixed point
+take wreath
+take manifold
+north
+drop fuel cell
+drop fixed point
+drop wreath
+drop manifold
+take fuel cell
+take polygon
+take boulder
+take wreath
+north
+drop fuel cell
+drop polygon
+drop boulder
+drop wreath
+take fuel cell
+take polygon
+take boulder
+take manifold
+north
+drop fuel cell
+drop polygon
+drop boulder
+drop manifold
+take fuel cell
+take polygon
+take wreath
+take manifold
+north
+drop fuel cell
+drop polygon
+drop wreath
+drop manifold
+take fuel cell
+take boulder
+take wreath
+take manifold
+north
+drop fuel cell
+drop boulder
+drop wreath
+drop manifold
+take tambourine
+take fixed point
+take polygon
+take boulder
+north
+drop tambourine
+drop fixed point
+drop polygon
+drop boulder
+take tambourine
+take fixed point
+take polygon
+take wreath
+north
+drop tambourine
+drop fixed point
+drop polygon
+drop wreath
+take tambourine
+take fixed point
+take polygon
+take manifold
+north
+drop tambourine
+drop fixed point
+drop polygon
+drop manifold
+take tambourine
+take fixed point
+take boulder
+take wreath
+north
+drop tambourine
+drop fixed point
+drop boulder
+drop wreath
+take tambourine
+take fixed point
+take boulder
+take manifold
+north
+drop tambourine
+drop fixed point
+drop boulder
+drop manifold
+take tambourine
+take fixed point
+take wreath
+take manifold
+north
+drop tambourine
+drop fixed point
+drop wreath
+drop manifold
+take tambourine
+take polygon
+take boulder
+take wreath
+north
+drop tambourine
+drop polygon
+drop boulder
+drop wreath
+take tambourine
+take polygon
+take boulder
+take manifold
+north
+drop tambourine
+drop polygon
+drop boulder
+drop manifold
+take tambourine
+take polygon
+take wreath
+take manifold
+north
+drop tambourine
+drop polygon
+drop wreath
+drop manifold
+take tambourine
+take boulder
+take wreath
+take manifold
+north
+drop tambourine
+drop boulder
+drop wreath
+drop manifold
+take fixed point
+take polygon
+take boulder
+take wreath
+north
+drop fixed point
+drop polygon
+drop boulder
+drop wreath
+take fixed point
+take polygon
+take boulder
+take manifold
+north
+drop fixed point
+drop polygon
+drop boulder
+drop manifold
+take fixed point
+take polygon
+take wreath
+take manifold
+north
+drop fixed point
+drop polygon
+drop wreath
+drop manifold
+take fixed point
+take boulder
+take wreath
+take manifold
+north
+drop fixed point
+drop boulder
+drop wreath
+drop manifold
+take polygon
+take boulder
+take wreath
+take manifold
+north
+drop polygon
+drop boulder
+drop wreath
+drop manifold

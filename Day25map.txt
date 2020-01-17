@@ -1,0 +1,23 @@
+                                            SickBay
+                                              |
+                                              |
+         Stables-Engeniering - Security    Hallway
+            |                                 |
+            |                                 |
+        Holodeck          --             Observatory
+            |                                 |
+            |                                 |
+         kitchen-HotF            Arcade - Navigation   
+                  |                 |         |
+              Corridor              |         |
+                                WarpDrive     |
+                                              |
+                                              |
+                         Silance Lab  -   Hullbreach
+                                |             |
+                            Passages          |
+                                |         Crew Quarters  
+                         GiftWrappingC        |
+                                              |
+                                           Storage
+   

@@ -42,8 +42,13 @@ class ASCIIComputer {
   }
 
   ConvertToAscii(aInstruction) {
-    for (let i = 0; i < aInstruction.length; i++)
-      this.mInputStream.push(aInstruction[i].charCodeAt(0));
+    for (let i = 0; i < aInstruction.length; i++) 
+    {
+      let charCode = aInstruction[i].charCodeAt(0);
+      if (charCode == 13)
+        continue;
+      this.mInputStream.push(charCode);
+    }
 
     if (this.mInputStream[this.mInputStream.length -1] != 10)
       this.mInputStream.push(10);

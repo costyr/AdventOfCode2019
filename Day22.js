@@ -1,5 +1,6 @@
 const util = require('./Util.js');
 const list = require('./LinkedList.js');
+var bigInt = require("big-integer");
 
 const OP_CUTN = 0;
 const OP_DEAL_NEW = 1;
@@ -25,91 +26,11 @@ function ParseLine(aLine) {
     console.log("Parse Error!");
 }
 
-function CreateCardStack(aCardsNumber) {
-  let cardStack = new list.LinkedList();
-
-  for (let i = 0; i < aCardsNumber; i++)
-    cardStack.AddTail(i);
-
-  return { stack: cardStack, dir: 0 };
-}
-
-function DealNewStack(aCardStack) {
-  if (aCardStack.dir == 0)
-    aCardStack.dir = 1;
-  else 
-    aCardStack.dir = 0;
-}
-
-function CutN(aCardStack, aCardsToCut) {
-
-  if (aCardsToCut == 0)
-    return;
-
-  if (aCardsToCut < 0)
-    aCardsToCut = aCardStack.stack.GetSize() - Math.abs(aCardsToCut);
-
-  if (aCardStack.dir == 0) {
-    let list = aCardStack.stack.SplitListAt(aCardsToCut);
-    aCardStack.stack.AppendList(list);
-  }
-  else 
-  {
-    let nodeIndex = aCardStack.stack.GetSize() - aCardsToCut;
-    let list = aCardStack.stack.SplitListAt(nodeIndex);
-    aCardStack.stack.AppendList(list);
-  }
-}
-
-function DealWithNIncrement(aCardStack, aIncrement) {
-  aCardStack.stack.RandomizeNth(aIncrement, aCardStack.dir == 1);
-  if (aCardStack.dir == 1)
-    aCardStack.dir = 0;
-}
-
-function PrintCardStack(aCardStack) {
-  console.log(aCardStack.dir ? aCardStack.stack.ToStringReverse() : aCardStack.stack.ToString());
-}
-
-function VisitCard(aContext, aValue, aIndex) {
-  if (aValue == aContext.targetValue)
-    aContext.cardIndex = aIndex;
-}
-
-function DealCards(aOps, aCardStack, aCardNumber) {
-
-  //PrintCardStack(aCardStack);
-
-  for (let i = 0; i < aOps.length; i++)
-  {
-    let dealOp = ops[i];
-    if (dealOp.op == OP_DEAL_NEW)
-      DealNewStack(aCardStack);
-    else if (dealOp.op == OP_CUTN)
-      CutN(aCardStack, dealOp.val);
-    else if (dealOp.op == OP_DEAL_INC) 
-    {
-      DealWithNIncrement(aCardStack, dealOp.val);
-    }
-    else 
-      console.log("Invalid deal operation!");
-
-    //PrintCardStack(aCardStack);
-  }
-
-  let context = { targetValue: aCardNumber, cardIndex: 0 };
-  if (aCardNumber >= 0)
-  {
-    aCardStack.stack.VisitList2(VisitCard.bind(null, context));
-    console.log(context.cardIndex);
-  }
-}
-
-function DealNewStack2(aCardsNumber, aCardPos) {
+function DealNewStack(aCardsNumber, aCardPos) {
   return aCardsNumber - aCardPos - 1;
 }
 
-function CutN2(aCardsNumber, aCardPos, aCardsToCut) {
+function CutN(aCardsNumber, aCardPos, aCardsToCut) {
   let newCardPos = 0;
   if (aCardsToCut > 0) 
   {
@@ -130,25 +51,25 @@ function CutN2(aCardsNumber, aCardPos, aCardsToCut) {
   return newCardPos;
 }
 
-function DealWithNIncrement2(aCardsNumber, aCardPos, aIncrement) {
+function DealWithNIncrement(aCardsNumber, aCardPos, aIncrement) {
   let posWithIncrement = aCardPos * aIncrement;
   let newCardPos = posWithIncrement % aCardsNumber;
   return newCardPos;
 }
 
-function DealCards2(aOps, aCardsNumber, aCardPos) {
+function DealCards(aOps, aCardsNumber, aCardPos) {
 
   let cardPos = aCardPos;
   for (let i = 0; i < aOps.length; i++)
   {
     let dealOp = ops[i];
     if (dealOp.op == OP_DEAL_NEW)
-      cardPos = DealNewStack2(aCardsNumber, cardPos);
+      cardPos = DealNewStack(aCardsNumber, cardPos);
     else if (dealOp.op == OP_CUTN)
-      cardPos = CutN2(aCardsNumber, cardPos, dealOp.val);
+      cardPos = CutN(aCardsNumber, cardPos, dealOp.val);
     else if (dealOp.op == OP_DEAL_INC) 
     {
-      cardPos = DealWithNIncrement2(aCardsNumber, cardPos, dealOp.val);
+      cardPos = DealWithNIncrement(aCardsNumber, cardPos, dealOp.val);
     }
     else 
       console.log("Invalid deal operation!");
@@ -163,12 +84,12 @@ function DealBig(aOps, aCardsNumber, aCardPos, aDealTimes) {
   let cardPos = aCardPos;
   for (let i = 0; i < aDealTimes; i++) 
   {
-    let a = DealCards2(aOps, aCardsNumber, 2020);
-    let b = DealCards2(aOps, aCardsNumber, 2021);
-    let c = DealCards2(aOps, aCardsNumber, 2022);
-    let d = DealCards2(aOps, aCardsNumber, 2023);
-    let e = DealCards2(aOps, aCardsNumber, 2024);
-    let f = DealCards2(aOps, aCardsNumber, 2025);
+    let a = DealCards(aOps, aCardsNumber, 2020);
+    let b = DealCards(aOps, aCardsNumber, 2021);
+    let c = DealCards(aOps, aCardsNumber, 2022);
+    let d = DealCards(aOps, aCardsNumber, 2023);
+    let e = DealCards(aOps, aCardsNumber, 2024);
+    let f = DealCards(aOps, aCardsNumber, 2025);
 
     console.log("-------");
     console.log(b - a);
@@ -178,36 +99,49 @@ function DealBig(aOps, aCardsNumber, aCardPos, aDealTimes) {
     console.log(f - e);
     console.log("-------");
 
-    cardPos = DealCards2(aOps, aCardsNumber, cardPos);
+    cardPos = DealCards(aOps, aCardsNumber, cardPos);
   }
 
   //console.log(cardPos);
+}
+
+function ModularDivide(a, b, n) {
+  let inv = bigInt(b).modInv(n);
+  let c = a.multiply(inv);
+  return c.mod(n);
 }
 
 var ops = util.MapInput('./Day22Input.txt', ParseLine, "\r\n");
 
 console.log(ops);
 
-//var cardStack = CreateCardStack(10);
+let x = DealCards(ops, 119315717514047, 0);
+let y = DealCards(ops, 119315717514047, 1);
+let z = DealCards(ops, 119315717514047, 2);
+let t = DealCards(ops, 119315717514047, 100);
 
-//PrintCardStack(cardStack);
+let u = (2019 * 2183 + 2129) % 10007;
+console.log(u);
 
-//DealNewStack(cardStack);
+let ty = (100 * 40286879916729 + 37260864847148) % 119315717514047;
 
-//PrintCardStack(cardStack);
+console.log(ty);
 
-//CutN(cardStack, -4);
+//DealCards(ops, 119315717514047, 2020);
 
-//PrintCardStack(cardStack);
+//DealBig(ops, 10007/*19315717514047*/, 2020, 100/*101741582076661*/);
 
-//DealWithNIncrement(cardStack, 3);
+let ff = bigInt(40286879916729).modPow(101741582076661, 119315717514047);
 
-//PrintCardStack(cardStack);
+let gg = bigInt(37260864847148).multiply(modularDivide(bigInt(40286879916729).modPow(101741582076661, 119315717514047).subtract(1), 40286879916728, 119315717514047)).mod(119315717514047);
 
-//let cardStack = CreateCardStack(10007);
+let tt = 2020 - gg;
+tt += 119315717514047;
 
-//DealCards(ops, cardStack, 2019);
+let rr = bigInt(tt).mod(119315717514047);
 
-//DealCards2(ops, 119315717514047, 2020);
+let xx = modularDivide(rr, ff, 119315717514047).mod(119315717514047);
 
-DealBig(ops, 10007/*19315717514047*/, 2020, 100/*101741582076661*/);
+console.log(ff.toString());
+console.log(gg.toString());
+console.log(xx.toString());

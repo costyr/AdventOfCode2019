@@ -75,15 +75,6 @@ function ComputeAllOrbits(aMap)
       }
     }
     //console.log(orbits);
-
-    let count = 0;
-    for (let o in orbits) 
-    {
-      //console.log("[" + o + ": " + orbits[o] + "]");
-      count += orbits[o];
-    }
-
-    console.log(count);
   }
   while(repeat);
 
@@ -138,4 +129,4 @@ function FindPath(aMap, aStart, aEnd)
 
 ComputeAllOrbits(map);
 
-//console.log(FindPath(map2, 'YOU', 'SAN'));
+console.log(FindPath(map2, 'YOU', 'SAN'));

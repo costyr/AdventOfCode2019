@@ -107,8 +107,6 @@ function DealBig(aOps, aCardsNumber, aCardPos, aDealTimes) {
 
 var ops = util.MapInput('./Day22Input.txt', ParseLine, "\r\n");
 
-console.log(ops);
-
 console.log(DealCards(ops, 10007, 2019));
 
 console.log(DealBig(ops, 119315717514047, 2020, 101741582076661).toString());

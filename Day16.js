@@ -56,17 +56,14 @@ function ComputePhase(aPhase, aOffset)
 function ComputePhase2(aPhase) 
 {
   let newPhase = [];
-  for (let i = 0; i < aPhase.length; i++)
+  let total = 0;
+  for (let i = aPhase.length - 1; i >= 0; i--)
   { 
-    let total = 0; 
-    for (let j = i; j < aPhase.length; j++) 
-    {
-      total += aPhase[j];
-    }
+    total += aPhase[i];
     newPhase.push(Math.abs(total) % 10);
   }
   
-  return newPhase;
+  return newPhase.reverse();
 }
 
 function PhaseToString(aPhase, aOffset, aLength, aPadding) 
@@ -109,10 +106,7 @@ function Transform(aSignal, aPhaseCount, aOffset)
 {
   let phase = util.CopyObject(aSignal);
   for (let i = 0; i < aPhaseCount; i++) 
-  { 
-    console.log(phase);
     phase = ComputePhase(phase, aOffset);
-  }
 
   return phase.slice(0, 8);
 }
@@ -121,10 +115,7 @@ function Transform2(aSignal, aPhaseCount)
 {
   let phase = util.CopyObject(aSignal);
   for (let i = 0; i < aPhaseCount; i++) 
-  { 
-    console.log(i);
     phase = ComputePhase2(phase);
-  }
 
   return phase;
 }
@@ -151,28 +142,10 @@ function ComputeMessageOffset(aSignal)
 
 var signal = util.MapInput('./Day16Input.txt', util.ParseInt, '');
 
-//let amplifiedSignal = AmplifySignal(signal, 10000);
-
-//console.log(signal);
-
-//ComputeFFT(1, signal.length);
-
-//let fftMap = ComputeFFTMap(signal.length, 16);
-
-//PrintFFTMap(fftMap);
-
-//console.log(Transform(signal, 100, 0));
+console.log(Transform(signal, 100, 0));
 
 let amplifiedSignal = AmplifySignal(signal, 10000);
 
 let messageOffset = ComputeMessageOffset(amplifiedSignal);
-
-//let fftMap = ComputeFFTMap(amplifiedSignal.length, messageOffset);
-
-//PrintFFTMap(fftMap);
-
-console.log(messageOffset);
  
-let jj = Transform2(amplifiedSignal.slice(messageOffset), 100);
-
-PrintPhase(jj, 0, 8, false);
+PrintPhase(Transform2(amplifiedSignal.slice(messageOffset), 100), 0, 8, false);

@@ -104,8 +104,8 @@ function EvolveInTime(aMap, aTimeCount) {
   for (let i = 0; i < aTimeCount; i++) {
     map = Evolve(map);
 
-    console.log();
-    PrintMap(map);
+    //console.log();
+    //PrintMap(map);
 
     if (stages[JSON.stringify(map)] != undefined)
       break;
@@ -286,8 +286,8 @@ function EvolveInTimeMultiLevel(aMap, aTimeCount, aLevelEstimate) {
 
   let levels = CreateMultiLevel(map, aLevelEstimate);
   for (let i = 0; i < aTimeCount; i++) {
-    console.log("Time " + i + " ---------------------------");
-    PrintLevels(levels);
+    //console.log("Time " + i + " ---------------------------");
+    //PrintLevels(levels);
     levels = EvolveMultiLevel(levels);
   }
 
@@ -301,8 +301,8 @@ function EvolveInTimeMultiLevel(aMap, aTimeCount, aLevelEstimate) {
 
 var map = util.MapInput("./Day24Input.txt", ParseMap, "\r\n");
 
-PrintMap(map);
+//PrintMap(map);
 
-//EvolveInTime(map, 1000);
+EvolveInTime(map, 1000);
 
 EvolveInTimeMultiLevel(map, 200, 250);

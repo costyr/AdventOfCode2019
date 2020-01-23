@@ -366,7 +366,7 @@ function SortByDistAndLevel(aDistMap, aElem1, aElem2) {
     return 0;
 }
 
-function FindShortestPath3(aCostMap, aStart, aEnd) {
+function FindShortestPath2(aCostMap, aStart, aEnd) {
   let queue = [{ id: aStart, level: 0 }];
 
   let distMap = [];
@@ -407,7 +407,7 @@ function FindShortestPath3(aCostMap, aStart, aEnd) {
       let estimateDist = currentDist + neighbour.cost;
       if (estimateDist < GetDist(distMap, neighbour.id, level)) {
         path[neighbour.id] = currentNode.id;
-        console.log(currentNode.id + " " + currentNode.level + "-->" + neighbour.id);
+        //console.log(currentNode.id + " " + currentNode.level + "-->" + neighbour.id);
         SetDist(distMap, neighbour.id, level, estimateDist);
       }
 
@@ -421,18 +421,6 @@ function FindShortestPath3(aCostMap, aStart, aEnd) {
     queue.sort(SortByDistAndLevel.bind(null, distMap));
   }
 
-  /*let portalsPath = [];
-  let next = aEnd;
-  while (1) {
-    portalsPath.unshift(next);
-
-    if (next == aStart)
-      break;
-    next = path[next];
-  }
-
-  console.log(portalsPath);*/
-
   return GetDist(distMap, aEnd, 0);
 }
 
@@ -442,19 +430,16 @@ PrintMap(map);
 
 var portals = FindPortals(map);
 
-PrintHashMap(portals);
+//PrintHashMap(portals);
 
-//var costMap = ComputeCostMap(map, portals, true);
+var costMap = ComputeCostMap(map, portals, true);
 
 //PrintHashMap(costMap);
 
-//let minDist = FindShortestPath(costMap, "AA", "ZZ");
-//console.log(minDist);
+console.log(FindShortestPath(costMap, "AA", "ZZ"));
 
-let fullCostMap = ComputeCostMap(map, portals, false);
+var fullCostMap = ComputeCostMap(map, portals, false);
 
-PrintHashMap(fullCostMap);
+//PrintHashMap(fullCostMap);
 
-let minDist = FindShortestPath3(fullCostMap, "AA", "ZZ");
-
-console.log(minDist);
+console.log(FindShortestPath2(fullCostMap, "AA", "ZZ"));

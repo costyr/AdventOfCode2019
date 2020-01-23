@@ -20,5 +20,5 @@ function CalculateFuel(aTotal, aElem)
 var total = { "fuel": 0, "withFuel": 0 };
 util.ReduceInput('./Day1Input.txt', CalculateFuel, total, '\r\n');
 
-console.log("Total fuel: " + total.fuel);
-console.log("Total with fuel: " + (total.fuel + total.withFuel));
+console.log(total.fuel);
+console.log(total.fuel + total.withFuel);

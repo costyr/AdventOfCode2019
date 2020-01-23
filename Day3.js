@@ -15,7 +15,7 @@ function ParseWire(aElem)
 
 var input = util.MapInput('./Day3Input.txt', ParseWire, '\r\n');
 
-console.log(input);
+//console.log(input);
 
 function AddPoint(aPoints, aX, aY, aLength, aMin) 
 {
@@ -79,5 +79,5 @@ for (let l = 0; l < input.length; l++)
     AddPoint(points, segmentPoints[j].x, segmentPoints[j].y, segmentPoints[j].l, min);
 }
 
-console.log("Min distance: " + min.dist);
-console.log("Min length: " + min.len);
+console.log(min.dist);
+console.log(min.len);

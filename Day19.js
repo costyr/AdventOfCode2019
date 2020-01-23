@@ -102,7 +102,7 @@ function FindClosestFit(aSquare)
   //for (let i = 900; i < 1000; i++)
   //{
     let map = PrintBeam(2000, 2000);
-    console.log("Printed map!");
+    //console.log("Printed map!");
     let ret = FindSquareOnMap(map, 2000, aSquare);
     if (ret != -1)
       return ret;
@@ -117,6 +117,6 @@ console.log(DiscoverBeam(50, 50));
 
 let map = PrintBeam(100, 100);
 
-map.PrintReverse();
+//map.PrintReverse();
 
 console.log(FindClosestFit(100));

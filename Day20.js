@@ -106,19 +106,15 @@ function GetOppositePortal(aPortal) {
     return aPortal + "1";
 }
 
-function ComputeCostMap(aMap, aPortals, aMergePortals) {
-  let portalDeps = [];
+function ComputeCostMap(aMap, aPortals) {
+  let graph = new alg.Graph();
   for (let portal in aPortals) {
 
     let costMap = new lee.Lee(aMap, IsValidDirection);
     costMap.ComputeLee(aPortals[portal]);
 
-    let deps = [];
-
-    if (!aMergePortals) {
-      if (portal != "AA" && portal != "ZZ")
-        deps.push({ id: GetOppositePortal(portal), cost: 1 });
-    }
+    if (portal != "AA" && portal != "ZZ")
+      graph.AddNeighbour(portal, { id: GetOppositePortal(portal), cost: 1 });
 
     for (let target in aPortals) {
       if (portal == target)
@@ -129,38 +125,16 @@ function ComputeCostMap(aMap, aPortals, aMergePortals) {
       let cost = costMap.GetCost(targetPos);
 
       if (cost > -1)
-        deps.push({ id: target, cost: cost });
-    }
-
-    portalDeps[portal] = deps;
-  }
-
-  if (!aMergePortals)
-    return portalDeps;
-
-  for (let pp in portalDeps) {
-    if (pp.endsWith("1")) {
-      let portal = pp.substr(0, pp.length - 1);
-      for (let i = 0; i < portalDeps[pp].length; i++) {
-        if (portalDeps[pp][i].id.endsWith("1"))
-          portalDeps[pp][i].id = portalDeps[pp][i].id.substr(0, portalDeps[pp][i].id.length - 1);
-        portalDeps[portal].push(portalDeps[pp][i]);
-      }
-      delete portalDeps[pp];
-    }
-    else {
-      for (let i = 0; i < portalDeps[pp].length; i++) {
-        if (portalDeps[pp][i].id.endsWith("1"))
-          portalDeps[pp][i].id = portalDeps[pp][i].id.substr(0, portalDeps[pp][i].id.length - 1);
-      }
+        graph.AddNeighbour(portal, { id: target, cost: cost });
     }
   }
-  return portalDeps;
+
+  return graph;
 }
 
 function CreateDistMap(aCostMap) {
   let distMap = [];
-  for (let portal in aCostMap) {
+  for (let portal in aCostMap.GetGraph()) {
     distMap[portal] = { visited: false, dist: Number.MAX_SAFE_INTEGER };
   }
 
@@ -202,7 +176,7 @@ function FindShortestPath(aCostMap, aStart, aEnd) {
       break;
     }
 
-    let neighbours = aCostMap[currentNode];
+    let neighbours = aCostMap.GetNeighbours(currentNode);
 
     for (let i = 0; i < neighbours.length; i++) {
       let neighbour = neighbours[i];
@@ -236,7 +210,7 @@ function FindShortestPath(aCostMap, aStart, aEnd) {
 
   console.log(portalsPath);
 
-  return distMap[aEnd].dist + portalsPath.length - 2;
+  return distMap[aEnd].dist;
 }
 
 function IsSame(aPortal1, aPortal2) {
@@ -315,7 +289,7 @@ function FindShortestPath2(aCostMap, aStart, aEnd) {
     if ((currentNode.id == aEnd) && (currentNode.level == 0))
       break;
 
-    let neighbours = aCostMap[currentNode.id];
+    let neighbours = aCostMap.GetNeighbours(currentNode.id);
 
     for (let i = 0; i < neighbours.length; i++) {
       let neighbour = neighbours[i];
@@ -366,14 +340,12 @@ var portals = FindPortals(map);
 
 //PrintHashMap(portals);
 
-var costMap = ComputeCostMap(map, portals, true);
+var costMap = ComputeCostMap(map, portals);
 
 //PrintHashMap(costMap);
 
 console.log(FindShortestPath(costMap, "AA", "ZZ"));
 
-var fullCostMap = ComputeCostMap(map, portals, false);
-
 //PrintHashMap(fullCostMap);
 
-console.log(FindShortestPath2(fullCostMap, "AA", "ZZ"));
+console.log(FindShortestPath2(costMap, "AA", "ZZ"));

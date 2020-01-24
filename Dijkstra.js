@@ -19,12 +19,22 @@ class Graph {
     this.mGraph = [];
   }
 
-  SetNeighbours(aNode, aNeighbours) {
-    this.mGraph[aNode.GetId()] = aNeighbours;
+  SetNeighbours(aNodeId, aNeighbours) {
+    this.mGraph[aNodeId] = aNeighbours;
   }
 
-  GetNeighbours(aNode) {
-    return this.mGraph[aNode.GetId()];
+  AddNeighbour(aNodeId, aNeighbour) {
+    if (this.mGraph[aNodeId] == undefined)
+      this.mGraph[aNodeId] = [];
+    this.mGraph[aNodeId].push(aNeighbour);
+  }
+
+  GetNeighbours(aNodeId) {
+    return this.mGraph[aNodeId];
+  }
+
+  GetGraph() {
+    return this.mGraph;
   }
 }
 

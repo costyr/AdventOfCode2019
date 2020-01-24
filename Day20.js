@@ -1,5 +1,6 @@
 const util = require('./Util.js');
 const alg = require('./Dijkstra.js');
+const lee = require('./Lee.js');
 
 function ParseLine(aElem) {
   return aElem.split("");
@@ -88,80 +89,11 @@ function PrintHashMap(aPortals) {
     console.log(p + ": " + JSON.stringify(aPortals[p]));
 }
 
-function IsValidDirection(aMap, aDirection) {
-  let x = aDirection.x;
-  let y = aDirection.y;
-  if ((y < 0) || (y >= aMap.length) ||
-    (x < 0) || (x >= aMap[y].length))
-    return false;
-
-  if (aMap[y][x] == '#' || aMap[y][x] == ' ')
+function IsValidDirection(aMapElem) {
+  if (aMapElem == '#' || aMapElem == ' ')
     return false;
 
   return true;
-}
-
-function FindValidDirections(aMap, aPos) {
-  let x = aPos.x;
-  let y = aPos.y;
-
-  let posTop = { x: x, y: y + 1 };
-  let posBottom = { x: x, y: y - 1 };
-  let posLeft = { x: x - 1, y: y };
-  let posRight = { x: x + 1, y: y };
-
-  let directions = [];
-  if (IsValidDirection(aMap, posTop))
-    directions.push(posTop);
-
-  if (IsValidDirection(aMap, posBottom))
-    directions.push(posBottom);
-
-  if (IsValidDirection(aMap, posLeft))
-    directions.push(posLeft);
-
-  if (IsValidDirection(aMap, posRight))
-    directions.push(posRight);
-
-  return directions;
-}
-
-function GetCost(aCostMap, aPos) {
-  if ((aCostMap[aPos.y] == undefined) ||
-    (aCostMap[aPos.y][aPos.x] == undefined))
-    return -1;
-  return aCostMap[aPos.y][aPos.x];
-}
-
-function SetCost(aCostMap, aPos, aCost) {
-  if (aCostMap[aPos.y] == undefined)
-    aCostMap[aPos.y] = [];
-  aCostMap[aPos.y][aPos.x] = aCost;
-}
-
-function ComputeLee(aMap, aStart) {
-  let costMap = [];
-  let stack = [aStart];
-
-  SetCost(costMap, aStart, 0);
-
-  let pos;
-  while (stack.length > 0) {
-    pos = stack.pop();
-
-    let cost = GetCost(costMap, pos);
-
-    let directions = FindValidDirections(aMap, pos);
-    for (let i = 0; i < directions.length; i++) {
-      if (GetCost(costMap, directions[i]) >= 0)
-        continue;
-
-      SetCost(costMap, directions[i], cost + 1);
-      stack.push(directions[i]);
-    }
-  }
-
-  return costMap;
 }
 
 function GetOppositePortal(aPortal) {
@@ -177,7 +109,9 @@ function GetOppositePortal(aPortal) {
 function ComputeCostMap(aMap, aPortals, aMergePortals) {
   let portalDeps = [];
   for (let portal in aPortals) {
-    let costMap = ComputeLee(aMap, aPortals[portal]);
+
+    let costMap = new lee.Lee(aMap, IsValidDirection);
+    costMap.ComputeLee(aPortals[portal]);
 
     let deps = [];
 
@@ -192,7 +126,7 @@ function ComputeCostMap(aMap, aPortals, aMergePortals) {
 
       let targetPos = aPortals[target];
 
-      let cost = GetCost(costMap, targetPos);
+      let cost = costMap.GetCost(targetPos);
 
       if (cost > -1)
         deps.push({ id: target, cost: cost });

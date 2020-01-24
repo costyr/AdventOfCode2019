@@ -1,7 +1,8 @@
 class Lee {
-  constructor(aMap) {
+  constructor(aMap, aIsValidDirectionFunc) {
     this.mMap = aMap;
     this.mCostMap = [];
+    this.mIsValidDirectionFunc = aIsValidDirectionFunc;
   }
 
   IsValidDirection(aDirection) {
@@ -16,6 +17,9 @@ class Lee {
 
     let posCharCode = this.mMap[y][x].charCodeAt(0);
     if ((posCharCode >= "A".charCodeAt(0)) && (posCharCode <= "Z".charCodeAt(0)))
+      return false;
+
+    if (!this.mIsValidDirectionFunc(this.mMap[y][x]))
       return false;
 
     return true;
@@ -82,6 +86,19 @@ class Lee {
           this.SetCost(directions[i], newCost);
           queue.push(directions[i]);
         }
+      }
+    }
+  }
+
+  Visit(aFunction) {
+    for (let i = 0; i < this.mCostMap.length; i++)
+    {
+      if (this.mCostMap[i] == undefined)
+        continue;
+      for (let j = 0; j < this.mCostMap[i].length; j++)
+      {
+        if (this.mCostMap[i][j] != undefined)
+          aFunction(this.mCostMap[j][i]);
       }
     }
   }

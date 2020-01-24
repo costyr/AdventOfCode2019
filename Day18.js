@@ -111,6 +111,17 @@ function GetKeyPos(aAllKeys, aKey) {
   return null;
 }
 
+function IsValidDirection(aMapElem) {
+  if (aMapElem == '#')
+    return false;
+
+  let posCharCode = aMapElem.charCodeAt(0);
+  if ((posCharCode >= "A".charCodeAt(0)) && (posCharCode <= "Z".charCodeAt(0)))
+    return false;
+
+  return true;
+}
+
 function ComputeMinTwoKeyCost(aMap, aAllDoors, aAllKeys) {
   let map = util.CopyObject(aMap);
 
@@ -122,7 +133,7 @@ function ComputeMinTwoKeyCost(aMap, aAllDoors, aAllKeys) {
 
   UnlockDoors(map, aAllDoors, allKeys);
 
-  let costMap = new lee.Lee(map);
+  let costMap = new lee.Lee(map, IsValidDirection);
 
   let minCost = Number.MAX_SAFE_INTEGER;
   let maxCost = 0;
@@ -164,7 +175,7 @@ function GetNeighbours(aMap, aKey, aStartPos, aAllKeys, aAllDoors, aStageKeys, a
 
   let pos = (aKey == '@') ? aStartPos : GetKeyPos(aAllKeys, aKey);
 
-  let costMap = new lee.Lee(map);
+  let costMap = new lee.Lee(map, IsValidDirection);
 
   costMap.ComputeLee(pos);
 
@@ -227,7 +238,6 @@ function BFS(aMap, aStartPos, aStartKey, aStartKeys, aStartPath, aStartCost, aAl
 
       let remainingKeys = (aAllKeys.length - keys.length);
 
-      let minCostEstimate = cost + remainingKeys * costMap.min;
       let maxCostEstimate = cost + remainingKeys * costMap.max;
 
       if (maxCostEstimate < minCost) {
@@ -246,9 +256,6 @@ function BFS(aMap, aStartPos, aStartKey, aStartKeys, aStartPath, aStartCost, aAl
       }
       else
         cache[hashKey] =  { cost: cost, path: path };
-
-      if (minCostEstimate > minCost)
-        continue;
 
       let newNode = { key: neighbour.key, keys: keys }
 

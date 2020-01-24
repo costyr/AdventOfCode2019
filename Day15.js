@@ -1,6 +1,7 @@
 const util = require('./Util.js');
 const matrix = require('./Matrix.js');
 const intcodeComputer = require('./IntcodeComputer.js');
+const lee = require('./Lee.js');
 
 const ID_WALL = 0;
 const ID_MOVED = 1;
@@ -16,80 +17,11 @@ const DIR_SOUTH = 2;
 const DIR_WEST = 3;
 const DIR_EAST = 4;
 
-function IsValidDirection(aMap, aDirection) {
-  let x = aDirection.x;
-  let y = aDirection.y;
-  if ((y < 0) || (y >= aMap.length) ||
-    (x < 0) || (x >= aMap[y].length))
-    return false;
-
-  if (aMap[y][x] == '#' || aMap[y][x] == ' ')
+function IsValidDirection(aMapElem) {
+  if (aMapElem == '#' || aMapElem == ' ')
     return false;
 
   return true;
-}
-
-function FindValidDirections(aMap, aPos) {
-  let x = aPos.x;
-  let y = aPos.y;
-
-  let posTop = { x: x, y: y + 1 };
-  let posBottom = { x: x, y: y - 1 };
-  let posLeft = { x: x - 1, y: y };
-  let posRight = { x: x + 1, y: y };
-
-  let directions = [];
-  if (IsValidDirection(aMap, posTop))
-    directions.push(posTop);
-
-  if (IsValidDirection(aMap, posBottom))
-    directions.push(posBottom);
-
-  if (IsValidDirection(aMap, posLeft))
-    directions.push(posLeft);
-
-  if (IsValidDirection(aMap, posRight))
-    directions.push(posRight);
-
-  return directions;
-}
-
-function GetCost(aCostMap, aPos) {
-  if ((aCostMap[aPos.y] == undefined) ||
-    (aCostMap[aPos.y][aPos.x] == undefined))
-    return -1;
-  return aCostMap[aPos.y][aPos.x];
-}
-
-function SetCost(aCostMap, aPos, aCost) {
-  if (aCostMap[aPos.y] == undefined)
-    aCostMap[aPos.y] = [];
-  aCostMap[aPos.y][aPos.x] = aCost;
-}
-
-function ComputeLee(aMap, aStart) {
-  let costMap = [];
-  let stack = [aStart];
-
-  SetCost(costMap, aStart, 0);
-
-  let pos;
-  while (stack.length > 0) {
-    pos = stack.pop();
-
-    let cost = GetCost(costMap, pos);
-
-    let directions = FindValidDirections(aMap, pos);
-    for (let i = 0; i < directions.length; i++) {
-      if (GetCost(costMap, directions[i]) >= 0)
-        continue;
-
-      SetCost(costMap, directions[i], cost + 1);
-      stack.push(directions[i]);
-    }
-  }
-
-  return costMap;
 }
 
 class RemoteControl {
@@ -102,6 +34,7 @@ class RemoteControl {
     this.mOxigenSystemPos = { x: 0, y: 0};
     this.mEndOfStream = false;
     this.mMinMax = null;
+    this.mOxygenSpreadTime = 0;
   }
 
   IsEndOfStream() {
@@ -130,7 +63,7 @@ class RemoteControl {
 
       if (aValue == ID_OXYGEN_SYSTEM) 
       {
-        console.log("Oxygen system! " + this.mMap.length);
+        //console.log("Oxygen system! " + this.mMap.length);
         this.mOxigenSystemPos = { x: this.mX, y: this.mY };
       }
     }
@@ -261,7 +194,7 @@ class RemoteControl {
 
   AddToMap(aX, aY, aValue) 
   {
-    console.log(aX + " " + aY + "-->" + aValue);
+    //console.log(aX + " " + aY + "-->" + aValue);
     let mapPos = this.FindMapPoint(aX, aY);
     if (mapPos)
     {
@@ -337,9 +270,16 @@ class RemoteControl {
 
     let oxygenSystem = this.ConvertPosToMap(this.mOxigenSystemPos);
 
-    let costMap = ComputeLee(map, start);
+    let costMap = new lee.Lee(map, IsValidDirection);
 
-    return costMap[oxygenSystem.y][oxygenSystem.x];
+    costMap.ComputeLee(start);
+
+    return costMap.GetCost(oxygenSystem);
+  }
+
+  ComputeOxygenSpreadTime(aCost) {
+    if (aCost > this.mOxygenSpreadTime)
+      this.mOxygenSpreadTime = aCost;
   }
 
   ComputeOxygenSpread() {
@@ -347,20 +287,14 @@ class RemoteControl {
 
     let oxygenSystem = this.ConvertPosToMap(this.mOxigenSystemPos);
 
-    let costMap = ComputeLee(map, oxygenSystem);
+    let costMap = new lee.Lee(map, IsValidDirection);
 
-    let oxygenSpreadTime = 0;
-    for (let i = 0; i < costMap.length; i++)
-    {
-      if (costMap[i] == undefined)
-        continue;
-      for (let j = 0; j < costMap[i].length; j++)
-      {
-        if ((costMap[i][j] != undefined) && (costMap[j][i] > oxygenSpreadTime))
-          oxygenSpreadTime = costMap[j][i];
-      }
-    }
-    return oxygenSpreadTime;
+    costMap.ComputeLee(oxygenSystem);
+
+    this.mOxygenSpreadTime = 0;
+    costMap.Visit(this.ComputeOxygenSpreadTime.bind(this));
+
+    return this.mOxygenSpreadTime;
   }
 }
 

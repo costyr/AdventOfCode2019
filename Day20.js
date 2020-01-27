@@ -132,85 +132,11 @@ function ComputeCostMap(aMap, aPortals) {
   return graph;
 }
 
-function CreateDistMap(aCostMap) {
-  let distMap = [];
-  for (let portal in aCostMap.GetGraph()) {
-    distMap[portal] = { visited: false, dist: Number.MAX_SAFE_INTEGER };
-  }
-
-  return distMap;
-}
-
-function SortByDist(aDistMap, aElem1, aElem2) {
-  let dist1 = aDistMap[aElem1].dist;
-  let dist2 = aDistMap[aElem2].dist;
-
-  if (dist1 < dist2)
-    return -1;
-  else if (dist1 > dist2)
-    return 1;
-  else
-    return 0;
-}
-
 function FindElem(aElements, aElem) {
   for (let i = 0; i < aElements.length; i++)
     if (JSON.stringify(aElements[i]) == JSON.stringify(aElem))
       return true;
   return false;
-}
-
-function FindShortestPath(aCostMap, aStart, aEnd) {
-  let queue = [aStart];
-
-  let distMap = CreateDistMap(aCostMap);
-  distMap[aStart].dist = 0;
-
-  let path = [];
-  while (queue.length > 0) {
-    let currentNode = queue.shift();
-    let currentDist = distMap[currentNode].dist;
-
-    if (currentNode == aEnd) {
-      foundEnd = true;
-      break;
-    }
-
-    let neighbours = aCostMap.GetNeighbours(currentNode);
-
-    for (let i = 0; i < neighbours.length; i++) {
-      let neighbour = neighbours[i];
-
-      if (distMap[neighbour.id].visited)
-        continue;
-
-      let estimateDist = currentDist + neighbour.cost;
-      if (estimateDist < distMap[neighbour.id].dist) {
-        path[neighbour.id] = currentNode;
-        distMap[neighbour.id].dist = estimateDist;
-      }
-
-      if (!FindElem(queue, neighbour.id))
-        queue.push(neighbour.id);
-    }
-
-    distMap[currentNode].visited = true;
-    queue.sort(SortByDist.bind(null, distMap));
-  }
-
-  let portalsPath = [];
-  let next = aEnd;
-  while (1) {
-    portalsPath.unshift(next);
-
-    if (next == aStart)
-      break;
-    next = path[next];
-  }
-
-  console.log(portalsPath);
-
-  return distMap[aEnd].dist;
 }
 
 function IsSame(aPortal1, aPortal2) {
@@ -344,7 +270,9 @@ var costMap = ComputeCostMap(map, portals);
 
 //PrintHashMap(costMap);
 
-console.log(FindShortestPath(costMap, "AA", "ZZ"));
+var dijkstra = new alg.Dijkstra(costMap);
+
+console.log(dijkstra.FindShortestPath("AA", "ZZ").dist);
 
 //PrintHashMap(fullCostMap);
 

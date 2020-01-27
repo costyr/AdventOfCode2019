@@ -130,7 +130,7 @@ class NetworkComputer {
       this.mY = aValue;
       this.mOutputOffset = 0;
 
-      //console.log("NIC: " + this.mNetworkAddress + " x: " + this.mX + " y: " + this.mY);
+      console.log("NIC: " + this.mNetworkAddress + " x: " + this.mX + " y: " + this.mY);
       this.mNetworkControler.DeliverPacket(this.mNetworkAddress, this.mX, this.mY);
     }
     else if (this.mOutputOffset == 1)

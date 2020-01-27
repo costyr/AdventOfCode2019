@@ -101,38 +101,48 @@ class NodeState {
     return JSON.stringify(aNode);
   }
 
-  InitState(aNode) {
+  InitState(aNodeId) {
 
-    let nodeId = this.GetId(aNode);
-
-    if (this.mState[nodeId] == undefined) 
+    if (this.mState[aNodeId] == undefined) 
     {
-      this.mState[nodeId] = { visited: false, dist: Number.MAX_SAFE_INTEGER };
+      this.mState[aNodeId] = { visited: false, dist: Number.MAX_SAFE_INTEGER };
       this.mSize++;
     }
   }
 
-  SetDist(aNode, aDist) {
-    this.InitState(aNode);
-    this.mState[this.GetId(aNode)].dist = aDist;
+  SetDist(aNodeId, aDist) {
+    this.InitState(aNodeId);
+    this.mState[aNodeId].dist = aDist;
   }
 
-  GetDist(aNode) {
-    if (this.mState[this.GetId(aNode)] == undefined)
+  GetDist(aNodeId) {
+    if (this.mState[aNodeId] == undefined)
       return Number.MAX_SAFE_INTEGER;
-    return this.mState[this.GetId(aNode)].dist;
+    return this.mState[aNodeId].dist;
   }
 
-  SetVisited(aNode) {
-    this.InitState(aNode);
-    this.mState[this.GetId(aNode)].visited = true;
+  SetVisited(aNodeId) {
+    this.InitState(aNodeId);
+    this.mState[aNodeId].visited = true;
   }
 
-  IsVisited(aNode) {
-    if (this.mState[this.GetId(aNode)] == undefined)
+  IsVisited(aNodeId) {
+    if (this.mState[aNodeId] == undefined)
       return false;
-    return this.mState[this.GetId(aNode)].visited;
+    return this.mState[aNodeId].visited;
   }
+}
+
+function SortByDist(aDistMap, aElem1Id, aElem2Id) {
+  let dist1 = aDistMap.GetDist(aElem1Id);
+  let dist2 = aDistMap.GetDist(aElem2Id);
+
+  if (dist1 < dist2)
+    return -1;
+  else if (dist1 > dist2)
+    return 1;
+  else
+    return 0;
 }
 
 class Dijkstra {
@@ -144,6 +154,8 @@ class Dijkstra {
     let queue = new PriorityQueue(aStart);
     let state = new NodeState();
 
+    queue.SetSortFunc(SortByDist.bind(null, state));
+
     state.SetDist(aStart, 0);
 
     let path = [];
@@ -151,7 +163,7 @@ class Dijkstra {
       let currentNode = queue.Pop();
       let currentDist = state.GetDist(currentNode);
 
-      if (currentNode.IsEqual(aEnd))
+      if (currentNode == aEnd)
         break;
 
       let neighbours = this.mGraph.GetNeighbours(currentNode);
@@ -159,27 +171,27 @@ class Dijkstra {
       for (let i = 0; i < neighbours.length; i++) {
         let neighbour = neighbours[i];
 
-        if (state.IsVisited(neighbour))
+        if (state.IsVisited(neighbour.id))
           continue;
 
         let estimateDist = currentDist + neighbour.cost;
-        if (estimateDist < state.GetDist(neighbour)) {
-          path[neighbour.GetId()] = currentNode.GetId();
-          state.SetDist(neighbour, estimateDist);
+        if (estimateDist < state.GetDist(neighbour.id)) {
+          path[neighbour.id] = currentNode;
+          state.SetDist(neighbour.id, estimateDist);
         }
 
-        queue.Push(neighbour.GetNode());
+        queue.Push(neighbour.id);
       }
 
       state.SetVisited(currentNode);
     }
 
     let goodPath = [];
-    let next = aEnd.GetId();
+    let next = aEnd;
     while (1) {
       goodPath.unshift(next);
 
-      if (next == aStart.GetId())
+      if (next == aStart)
         break;
       next = path[next];
     }

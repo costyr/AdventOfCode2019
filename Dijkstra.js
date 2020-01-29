@@ -1,19 +1,4 @@
 
-class Node {
-  constructor(aRawNode) {
-    this.mRawNode = aRawNode;
-    this.mId = JSON.stringify(this.mRawNode);
-  }
-
-  GetId() {
-    return this.mId;
-  }
-
-  IsEqual(aNode) {
-    return JSON.stringify(this.mRawNode) == JSON.stringify(aNode);
-  }
-}
-
 class Graph {
   constructor() {
     this.mGraph = [];
@@ -41,7 +26,9 @@ class Graph {
 class PriorityQueue {
   constructor(aStatNode) 
   {
-    this.mQueue = [aStatNode];
+    this.mQueue = [];
+    if (aStatNode != undefined)
+      this.mQueue.push(aStatNode);
     this.mSortFunc = null;
   }
 
@@ -146,62 +133,128 @@ function SortByDist(aDistMap, aElem1Id, aElem2Id) {
 }
 
 class Dijkstra {
-  constructor(aGraph) {
+  constructor(aGraph, aStateExtra) {
     this.mGraph = aGraph;
+    this.mStateExtra = aStateExtra;
+  }
+
+  CreateQueueNode(aCurrentNode, aNeighbourId) {
+    if (this.mStateExtra != undefined)
+      return this.mStateExtra.CreateQueueNode(aCurrentNode, aNeighbourId);
+    return aNeighbourId;
+  }
+
+  ComputeStateId(aCurrentNode, aNeighbourId) {
+    if (this.mStateExtra != undefined)
+      return this.mStateExtra.ComputeStateId(aCurrentNode, aNeighbourId);
+
+    if (aNeighbourId == undefined)
+      return aCurrentNode;
+    return aNeighbourId;  
+  }
+
+  SetStartState(aState, aStart) {
+    if (this.mStateExtra != undefined) {
+      this.mStateExtra.SetStartState(aState, aStart);
+      return;
+    }
+    aState.SetDist(aStart, 0);
+  }
+
+  InitQueue(aQueue, aStart) {
+    if (this.mStateExtra != undefined) {
+      this.mStateExtra.InitQueue(aQueue, aStart);
+      return;
+    }
+    aQueue.Push(aStart);
+  }
+
+  GetNodeId(aNode) {
+    if (this.mStateExtra != undefined) 
+      return this.mStateExtra.GetNodeId(aNode);
+
+    return aNode;
+  }
+
+  EndNodeReached(aCurrentNode, aEndNodeId) {
+    if (this.mStateExtra != undefined) 
+      return this.mStateExtra.EndNodeReached(aCurrentNode, aEndNodeId);
+
+    return aCurrentNode == aEndNodeId;
+  }
+
+  IsValidNeighbour(aCurrentNode, aNeighbourId) {
+    if (this.mStateExtra != undefined) 
+      return this.mStateExtra.IsValidNeighbour(aCurrentNode, aNeighbourId);
+    return true;
   }
 
   FindShortestPath(aStart, aEnd) {
-    let queue = new PriorityQueue(aStart);
+    let queue = new PriorityQueue();
+    this.InitQueue(queue, aStart);
+
     let state = new NodeState();
+    this.SetStartState(state, aStart);
 
-    queue.SetSortFunc(SortByDist.bind(null, state));
-
-    state.SetDist(aStart, 0);
+    if (this.mStateExtra != undefined)
+      queue.SetSortFunc(this.mStateExtra.SortByDist.bind(null, state))
+    else
+      queue.SetSortFunc(SortByDist.bind(null, state));
 
     let path = [];
     while (!queue.IsEmpty()) {
       let currentNode = queue.Pop();
-      let currentDist = state.GetDist(currentNode);
 
-      if (currentNode == aEnd)
+      let currentNodeStateId = this.ComputeStateId(currentNode);
+
+      let currentDist = state.GetDist(currentNodeStateId);
+
+      if (this.EndNodeReached(currentNode, aEnd))
         break;
 
-      let neighbours = this.mGraph.GetNeighbours(currentNode);
+      let neighbours = this.mGraph.GetNeighbours(this.GetNodeId(currentNode));
 
       for (let i = 0; i < neighbours.length; i++) {
         let neighbour = neighbours[i];
 
-        if (state.IsVisited(neighbour.id))
+        if (!this.IsValidNeighbour(currentNode, neighbour.id))
+          continue;
+
+        let neighbourStateId = this.ComputeStateId(currentNode, neighbour.id);
+
+        if (state.IsVisited(neighbourStateId))
           continue;
 
         let estimateDist = currentDist + neighbour.cost;
-        if (estimateDist < state.GetDist(neighbour.id)) {
-          path[neighbour.id] = currentNode;
-          state.SetDist(neighbour.id, estimateDist);
+        if (estimateDist < state.GetDist(neighbourStateId)) {
+          path[neighbourStateId] = currentNodeStateId;
+          state.SetDist(neighbourStateId, estimateDist);
         }
 
-        queue.Push(neighbour.id);
+        queue.Push(this.CreateQueueNode(currentNode, neighbour.id));
       }
 
-      state.SetVisited(currentNode);
+      state.SetVisited(currentNodeStateId);
     }
 
+    let startNodeStateId = this.ComputeStateId(aStart);
+    let endNodeStateId = this.ComputeStateId(aEnd);
+
     let goodPath = [];
-    let next = aEnd;
+    let next = endNodeStateId;
     while (1) {
       goodPath.unshift(next);
 
-      if (next == aStart)
+      if (next == startNodeStateId)
         break;
       next = path[next];
     }
 
-    return { dist: state.GetDist(aEnd), path: goodPath };
+    return { dist: state.GetDist(endNodeStateId), path: goodPath };
   }
 }
 
 module.exports = {
-  Node,
   NodeState,
   Graph,
   PriorityQueue,

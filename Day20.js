@@ -84,11 +84,6 @@ function FindPortals(aMap) {
   return portals;
 }
 
-function PrintHashMap(aPortals) {
-  for (let p in aPortals)
-    console.log(p + ": " + JSON.stringify(aPortals[p]));
-}
-
 function IsValidDirection(aMapElem) {
   if (aMapElem == '#' || aMapElem == ' ')
     return false;
@@ -132,13 +127,6 @@ function ComputeCostMap(aMap, aPortals) {
   return graph;
 }
 
-function FindElem(aElements, aElem) {
-  for (let i = 0; i < aElements.length; i++)
-    if (JSON.stringify(aElements[i]) == JSON.stringify(aElem))
-      return true;
-  return false;
-}
-
 function IsSame(aPortal1, aPortal2) {
   return aPortal1.substr(0, 2) == aPortal2.substr(0, 2);
 }
@@ -147,115 +135,86 @@ function IsOuter(aPortal) {
   return aPortal.endsWith("1");
 }
 
-function IsVisited(aDistMap, aNode, aLevel) {
-  if (aDistMap[aNode] == undefined)
-    return false;
- 
-  if (aDistMap[aNode][aLevel] == undefined)
-    return false;
-
-  return aDistMap[aNode][aLevel].visited;
-}
-
-function SetVisited(aDistMap, aNode, aLevel) {
-  if (aDistMap[aNode] == undefined)
-    aDistMap[aNode] = [];
-
-  if (aDistMap[aNode][aLevel] == undefined)
-    aDistMap[aNode][aLevel] = { visited: true, dist: Number.MAX_SAFE_INTEGER };
-  else
-    aDistMap[aNode][aLevel].visited = true;
-}
-
-function GetDist(aDistMap, aNode, aLevel) 
-{
-  if (aDistMap[aNode] == undefined)
-    return Number.MAX_SAFE_INTEGER;
- 
-  if (aDistMap[aNode][aLevel] == undefined)
-    return Number.MAX_SAFE_INTEGER;
-
-  return aDistMap[aNode][aLevel].dist;
-}
-
-function SetDist(aDistMap, aNode, aLevel, aDist) {
-  if (aDistMap[aNode] == undefined)
-    aDistMap[aNode] = [];
-
-  if (aDistMap[aNode][aLevel] == undefined)
-    aDistMap[aNode][aLevel] = { visited: false, dist: aDist };
-  else
-    aDistMap[aNode][aLevel].dist = aDist;
-}
-
-function SortByDistAndLevel(aDistMap, aElem1, aElem2) {
-  let dist1 = GetDist(aDistMap, aElem1.id, aElem1.level);
-  let dist2 = GetDist(aDistMap, aElem2.id, aElem2.level);
-
-  if (dist1 < dist2)
-    return -1;
-  else if (dist1 > dist2)
-    return 1;
-  else
-    return 0;
-}
-
-function FindShortestPath2(aCostMap, aStart, aEnd) {
-  let queue = [{ id: aStart, level: 0 }];
-
-  let distMap = [];
-  SetDist(distMap, aStart, 0, 0);
-
-  let path = [];
-  while (queue.length > 0) {
-    let currentNode = queue.shift();
-
-    let currentDist = GetDist(distMap, currentNode.id, currentNode.level);
-
-    if ((currentNode.id == aEnd) && (currentNode.level == 0))
-      break;
-
-    let neighbours = aCostMap.GetNeighbours(currentNode.id);
-
-    for (let i = 0; i < neighbours.length; i++) {
-      let neighbour = neighbours[i];
-
-     if (((neighbour.id == "ZZ") && (currentNode.level > 0)) || 
-           (IsOuter(neighbour.id) && !IsSame(currentNode.id, neighbour.id) && (currentNode.level == 0)))
-        continue;
-
-      let level = currentNode.level;
-      if (IsSame(currentNode.id, neighbour.id)) 
-      {
-        if (IsOuter(currentNode.id) && !IsOuter(neighbour.id)) 
-        {
-          level--;
-        }
-        else
-          level++;
-      }
-
-      if (IsVisited(distMap, neighbour.id, level))
-        continue;
-
-      let estimateDist = currentDist + neighbour.cost;
-      if (estimateDist < GetDist(distMap, neighbour.id, level)) {
-        path[neighbour.id] = currentNode.id;
-        //console.log(currentNode.id + " " + currentNode.level + "-->" + neighbour.id);
-        SetDist(distMap, neighbour.id, level, estimateDist);
-      }
-
-      let newNode = { id: neighbour.id, level: level };
-
-      if (!FindElem(queue, newNode))
-        queue.push(newNode);
-    }
-
-    SetVisited(distMap, currentNode.id, currentNode.level);
-    queue.sort(SortByDistAndLevel.bind(null, distMap));
+class FindShortestPathMulti {
+  constructor() {
+    this.mLevel = 0;
   }
 
-  return GetDist(distMap, aEnd, 0);
+  ComputeNeighbourLevel(aCurrentNode, aNeighbourId) {
+    this.mLevel = aCurrentNode.level;
+    if (IsSame(aCurrentNode.id, aNeighbourId)) 
+    {
+      if (IsOuter(aCurrentNode.id) && !IsOuter(aNeighbourId)) 
+      {
+        this.mLevel--;
+      }
+      else
+        this.mLevel++;
+    }
+
+    return this.mLevel;
+  }
+
+  CreateQueueNode(aCurrentNode, aNeighbourId) {
+    return { id: aNeighbourId, level: this.mLevel };
+  }
+
+  ComputeStateId(aCurrentNode, aNeighbourId) {
+    let stateId = "";
+    if (aNeighbourId == undefined) 
+    {
+      if ((aCurrentNode.id == undefined) && ((aCurrentNode == "AA") || (aCurrentNode == "ZZ")))
+        return aCurrentNode + "_0"; 
+      stateId = aCurrentNode.id + "_" + aCurrentNode.level;
+    }
+    else
+    {
+      let level = this.ComputeNeighbourLevel(aCurrentNode, aNeighbourId);
+      stateId = aNeighbourId + "_" + level;
+    }
+
+    return stateId;
+  }
+
+  SetStartState(aState, aStart) {
+    let start = aStart + "_0";
+    aState.SetDist(start, 0);
+  }
+
+  InitQueue(aQueue, aStart) {
+    aQueue.Push({ id: aStart, level: 0 });
+  }
+
+  GetNodeId(aNode) {
+    return aNode.id;
+  }
+
+  EndNodeReached(aCurrentNode, aEndNodeId) {
+    return ((aCurrentNode.id == aEndNodeId) && (aCurrentNode.level == 0));
+  }
+
+  IsValidNeighbour(aCurrentNode, aNeighbourId) {
+    if (((aNeighbourId == "ZZ") && (aCurrentNode.level > 0)) || 
+         (IsOuter(aNeighbourId) && !IsSame(aCurrentNode.id, aNeighbourId) && (aCurrentNode.level == 0)))
+      return false;
+    return true;
+  }
+
+  SortByDist(aDistMap, aElem1, aElem2) {
+
+    let stateId1 = aElem1.id + "_" + aElem1.level;
+    let stateId2 = aElem2.id + "_" + aElem2.level;
+
+    let dist1 = aDistMap.GetDist(stateId1);
+    let dist2 = aDistMap.GetDist(stateId2);
+  
+    if (dist1 < dist2)
+      return -1;
+    else if (dist1 > dist2)
+      return 1;
+    else
+      return 0;
+  }
 }
 
 var map = util.MapInput("./Day20Input.txt", ParseMap, "\r\n");
@@ -264,16 +223,14 @@ PrintMap(map);
 
 var portals = FindPortals(map);
 
-//PrintHashMap(portals);
-
 var costMap = ComputeCostMap(map, portals);
-
-//PrintHashMap(costMap);
 
 var dijkstra = new alg.Dijkstra(costMap);
 
 console.log(dijkstra.FindShortestPath("AA", "ZZ").dist);
 
-//PrintHashMap(fullCostMap);
+var searchMulti = new FindShortestPathMulti();
 
-console.log(FindShortestPath2(costMap, "AA", "ZZ"));
+var dijkstraMulti = new alg.Dijkstra(costMap, searchMulti);
+
+console.log(dijkstraMulti.FindShortestPath("AA", "ZZ").dist);
